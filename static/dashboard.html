@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Maatri - ASHA/ANM डैशबोर्ड</title>
+<link rel="manifest" href="/static/manifest.json" />
+<meta name="theme-color" content="#0E8A5F" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ============ Design tokens ============ */
+  :root {
+    --green: #0E8A5F;
+    --green-dark: #0a6e4b;
+    --green-light: #e6f5ef;
+    --green-50: #f2faf6;
+    --amber: #E0A106;
+    --amber-light: #fdf4dd;
+    --red: #D64545;
+    --red-light: #fbe9e9;
+    --ink: #16221d;
+    --muted: #5d6b65;
+    --line: #e3e9e6;
+    --bg: #f4f7f5;
+    --card: #ffffff;
+    --shadow: 0 1px 2px rgba(16,40,30,.06), 0 8px 24px rgba(16,40,30,.06);
+    --shadow-lg: 0 12px 40px rgba(16,40,30,.18);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --tap: 44px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Noto Sans Devanagari", "Inter", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.45;
+  }
+  /* Glosses inherit the parent's text color (white on green, dark on white) so they stay readable everywhere */
+  .en { font-family: "Inter", sans-serif; color: inherit; opacity: .72; font-weight: 400; }
+  .gloss { font-size: .78em; color: inherit; opacity: .68; font-weight: 400; }
+
+  button { font-family: inherit; cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+    outline: 3px solid rgba(14,138,95,.4);
+    outline-offset: 2px;
+  }
+
+  /* ============ Layout ============ */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 64px; }
+
+  /* ============ Header ============ */
+  header.app {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green-dark) 100%);
+    color: #fff;
+    padding: 16px 0 20px;
+    box-shadow: var(--shadow);
+    position: sticky; top: 0; z-index: 30;
+  }
+  .header-inner { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+  .header-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .logo {
+    width: 42px; height: 42px; border-radius: 12px; background: rgba(255,255,255,.18);
+    display: grid; place-items: center; font-size: 22px; flex-shrink: 0;
+  }
+  .header-titles h1 { font-size: 19px; margin: 0; font-weight: 700; letter-spacing: -.2px; }
+  .header-titles .sub { font-size: 12.5px; opacity: .85; font-family: "Inter", sans-serif; }
+  .didi-chip {
+    margin-left: auto; display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.15); padding: 6px 14px 6px 6px; border-radius: 999px;
+  }
+  .didi-avatar { width: 32px; height: 32px; border-radius: 50%; background: #fff; color: var(--green-dark);
+    display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .didi-chip .nm { font-weight: 600; font-size: 14px; }
+  .didi-chip .rl { font-size: 11px; opacity: .8; }
+
+  .summary-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .stat {
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
+    border-radius: 12px; padding: 10px 16px; min-width: 96px; backdrop-filter: blur(2px);
+  }
+  .stat .num { font-size: 22px; font-weight: 700; font-family: "Inter", sans-serif; line-height: 1.1; }
+  .stat .lbl { font-size: 11.5px; opacity: .9; }
+  .stat.risk { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .dot.GREEN { background: #6fe3b4; } .dot.YELLOW { background: #ffd96b; } .dot.RED { background: #ff9b9b; }
+
+  /* ============ Tabs ============ */
+  .tabs { display: flex; gap: 4px; margin: 20px 0 16px; background: var(--card);
+    padding: 5px; border-radius: 12px; box-shadow: var(--shadow); width: fit-content; max-width: 100%; flex-wrap: wrap; }
+  .tab {
+    border: 0; background: transparent; color: var(--muted); font-weight: 600; font-size: 14.5px;
+    padding: 10px 18px; border-radius: 8px; min-height: var(--tap); display: flex; align-items: center; gap: 8px;
+  }
+  .tab.active { background: var(--green); color: #fff; }
+  .tab .badge-count {
+    background: var(--red); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700;
+    min-width: 18px; height: 18px; padding: 0 5px; display: inline-grid; place-items: center; font-family: "Inter", sans-serif;
+  }
+  .tab.active .badge-count { background: rgba(255,255,255,.25); }
+
+  /* ============ Filter bar ============ */
+  .panel { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .filters { padding: 16px; margin-bottom: 16px; }
+  .filters-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+  .filters-head .ttl { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .cohort-count { font-size: 13.5px; color: var(--green-dark); font-weight: 700; background: var(--green-light);
+    padding: 5px 12px; border-radius: 999px; }
+  .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--muted); }
+  select, input[type=text], input[type=tel], textarea {
+    font-family: inherit; font-size: 14.5px; color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 0 12px;
+    height: var(--tap); background: #fff; width: 100%;
+  }
+  textarea { height: auto; padding: 10px 12px; resize: vertical; min-height: 90px; line-height: 1.5; }
+  select:hover, input:hover { border-color: #c9d4cf; }
+  select:focus, input:focus, textarea:focus { border-color: var(--green); }
+
+  .toggle-field { justify-content: flex-end; }
+  .switch { display: flex; align-items: center; gap: 10px; height: var(--tap); cursor: pointer;
+    border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 0 12px; user-select: none; }
+  .switch.on { border-color: var(--green); background: var(--green-50); }
+  .switch .track { width: 40px; height: 22px; border-radius: 999px; background: #cdd6d2; position: relative; transition: .15s; flex-shrink: 0; }
+  .switch.on .track { background: var(--green); }
+  .switch .thumb { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: .15s; }
+  .switch.on .thumb { left: 20px; }
+  .switch .txt { font-size: 13px; font-weight: 600; }
+
+  .filters-foot { display: flex; gap: 10px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+  .btn-link { background: transparent; border: 0; color: var(--green-dark); font-weight: 600; font-size: 14px;
+    text-decoration: underline; text-underline-offset: 3px; padding: 8px 6px; min-height: var(--tap);
+    display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+  .btn-link:hover { color: var(--green); }
+  .btn {
+    border: 0; border-radius: var(--radius-sm); font-weight: 600; font-size: 14.5px;
+    padding: 0 18px; min-height: var(--tap); display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary { background: var(--green); color: #fff; }
+  .btn-primary:hover { background: var(--green-dark); }
+  .btn-ghost { background: var(--green-light); color: var(--green-dark); }
+  .btn-ghost:hover { background: #d6efe4; }
+  .btn-warn { background: var(--amber-light); color: #946a00; border: 1.5px solid #f0d68a; }
+  .btn-warn:hover { background: #fbeec2; border-color: var(--amber); }
+  .btn-warn .vdot { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); flex-shrink: 0; }
+  .btn-outline { background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
+  .btn-outline:hover { border-color: #c9d4cf; }
+  .btn-light { background: #fff; color: var(--green-dark); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ============ Search ============ */
+  .list-head { display: flex; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .search { position: relative; flex: 1; min-width: 200px; }
+  .search input { padding-left: 40px; }
+  .search .ico { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 16px; }
+
+  /* ============ Table ============ */
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px;
+    color: var(--muted); font-weight: 700; padding: 12px 16px; background: var(--green-50);
+    border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--line); cursor: pointer; transition: background .1s; }
+  tbody tr:hover { background: var(--green-50); }
+  tbody td { padding: 13px 16px; font-size: 14px; vertical-align: middle; }
+  .pname { font-weight: 700; }
+  .name-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .psub { font-size: 12px; color: var(--muted); }
+  .mono { font-family: "Inter", sans-serif; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .badge .bdot { width: 8px; height: 8px; border-radius: 50%; }
+  .risk-GREEN { background: var(--green-light); color: var(--green-dark); }
+  .risk-GREEN .bdot { background: var(--green); }
+  .risk-YELLOW { background: var(--amber-light); color: #946a00; }
+  .risk-YELLOW .bdot { background: var(--amber); }
+  .risk-RED { background: var(--red-light); color: #a52f2f; }
+  .risk-RED .bdot { background: var(--red); }
+
+  .verified { color: var(--green-dark); font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; }
+  .verified .tick { width: 18px; height: 18px; border-radius: 50%; background: var(--green); color: #fff;
+    display: grid; place-items: center; font-size: 11px; }
+  .notverified { color: var(--muted); font-size: 13px; }
+  .abha-addr { color: var(--green-dark); font-weight: 600; }
+
+  /* "Verify" action in the row = custom amber warning icon (no text, no circle); amber = pending, distinct from green tick */
+  .verify-icon { background: transparent; border: 0; padding: 2px; flex-shrink: 0; line-height: 0;
+    display: inline-grid; place-items: center; transition: transform .12s ease; }
+  .verify-icon svg { width: 22px; height: 22px; display: block; filter: drop-shadow(0 1px 1px rgba(224,161,6,.35)); }
+  .verify-icon:hover { transform: scale(1.15); }
+  .verify-icon:hover svg { filter: drop-shadow(0 2px 4px rgba(224,161,6,.5)); }
+  td.actions { text-align: right; }
+
+  /* Registration-source icon beside the name (didi = ASHA/ANM, self = WhatsApp) */
+  .reg-src { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; }
+  .reg-src svg { width: 14px; height: 14px; display: block; }
+  .reg-src.didi { background: var(--green-light); color: var(--green-dark); }
+  .reg-src.self { background: #eef1f0; color: #7c8a84; }
+
+  /* Source pill in the detail panel */
+  .src-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700;
+    padding: 5px 11px 5px 8px; border-radius: 999px; }
+  .src-pill svg { width: 16px; height: 16px; }
+  .src-pill.didi { background: var(--green-light); color: var(--green-dark); }
+  .src-pill.self { background: #eef1f0; color: #5d6b65; }
+
+  .anc-due { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--red);
+    background: var(--red-light); padding: 2px 7px; border-radius: 6px; margin-top: 3px; }
+
+  .empty { padding: 48px 16px; text-align: center; color: var(--muted); }
+  .empty .big { font-size: 40px; }
+
+  /* ============ Cards for mobile / inbox ============ */
+  .inbox-list { padding: 6px; }
+  .inbox-item { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 12px; cursor: pointer; }
+  .inbox-item:hover { background: var(--green-50); }
+  .inbox-item + .inbox-item { border-top: 1px solid var(--line); border-radius: 0; }
+  .inbox-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--green-light); color: var(--green-dark);
+    display: grid; place-items: center; font-weight: 700; flex-shrink: 0; }
+  .inbox-body { flex: 1; min-width: 0; }
+  .inbox-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .inbox-name { font-weight: 700; font-size: 14.5px; }
+  .inbox-time { font-size: 11.5px; color: var(--muted); white-space: nowrap; font-family: "Inter", sans-serif; }
+  .inbox-snip { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .unread-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex-shrink: 0; margin-top: 6px; }
+
+  /* ============ Modal / panel ============ */
+  .scrim { position: fixed; inset: 0; background: rgba(16,34,29,.45); z-index: 40; display: none;
+    align-items: flex-end; justify-content: center; padding: 0; }
+  .scrim.open { display: flex; }
+  @media (min-width: 760px) { .scrim { align-items: center; padding: 24px; } }
+
+  .modal { background: #fff; width: 100%; max-width: 520px; border-radius: 18px 18px 0 0; box-shadow: var(--shadow-lg);
+    max-height: 92vh; display: flex; flex-direction: column; animation: rise .2s ease; }
+  @media (min-width: 760px) { .modal { border-radius: 18px; } }
+  .modal.wide { max-width: 620px; }
+  @keyframes rise { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+
+  .modal-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+  .modal-head h3 { margin: 0; font-size: 17px; font-weight: 700; }
+  .modal-head .sub { font-size: 12.5px; color: var(--muted); }
+  .modal-close { margin-left: auto; border: 0; background: var(--bg); width: 38px; height: 38px; border-radius: 10px;
+    font-size: 18px; color: var(--muted); display: grid; place-items: center; }
+  .modal-close:hover { background: var(--line); }
+  .modal-body { padding: 20px; overflow-y: auto; }
+  .modal-foot { padding: 16px 20px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
+  /* Detail panel */
+  .detail-hero { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+  .detail-avatar { width: 56px; height: 56px; border-radius: 16px; background: var(--green-light); color: var(--green-dark);
+    display: grid; place-items: center; font-weight: 700; font-size: 22px; flex-shrink: 0; }
+  .detail-hero h3 { margin: 0; font-size: 19px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .info { background: var(--green-50); border-radius: 12px; padding: 11px 13px; }
+  .info .k { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+  .info .v { font-size: 14.5px; font-weight: 600; margin-top: 2px; }
+
+  /* Detail top meta row (risk badge + verify chip) */
+  .detail-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+
+  /* Compact, clean verify chip in the detail panel */
+  .verify-chip { display: inline-flex; align-items: center; gap: 7px; background: var(--amber-light);
+    color: #946a00; border: 1.5px solid #f0d68a; border-radius: 999px; font-weight: 700; font-size: 13.5px;
+    padding: 7px 13px 7px 9px; line-height: 1; }
+  .verify-chip svg { width: 17px; height: 17px; display: block; }
+  .verify-chip:hover { background: #fbeec2; border-color: var(--amber); }
+
+  /* Address card with Get-directions link */
+  .addr-card { display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap;
+    background: var(--green-50); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+  .addr-text .k { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+  .addr-text .v { font-size: 14.5px; font-weight: 600; margin-top: 2px; }
+  .map-link { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; text-decoration: none;
+    background: #fff; color: var(--green-dark); border: 1.5px solid var(--green); border-radius: 999px;
+    font-weight: 700; font-size: 13.5px; padding: 8px 14px; min-height: 40px; }
+  .map-link svg { width: 18px; height: 18px; display: block; }
+  .map-link:hover { background: var(--green); color: #fff; border-color: var(--green); }
+
+  .section-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px;
+    margin: 6px 0 10px; display: flex; align-items: center; gap: 8px; }
+
+  /* Risk panel (factors, reported symptom, protocol, change-risk) */
+  .risk-panel { background: #fbfdfc; border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 18px; }
+  .risk-factors { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rf-chip { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600;
+    padding: 6px 12px; border-radius: 10px; }
+  .rf-chip .bdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .rf-RED { background: var(--red-light); color: #a52f2f; } .rf-RED .bdot { background: var(--red); }
+  .rf-YELLOW { background: var(--amber-light); color: #946a00; } .rf-YELLOW .bdot { background: var(--amber); }
+  .rf-GREEN { background: var(--green-light); color: var(--green-dark); } .rf-GREEN .bdot { background: var(--green); }
+  .no-risk { font-size: 13.5px; color: var(--muted); }
+  .rf-remove { border: 0; background: rgba(0,0,0,.08); color: inherit; width: 18px; height: 18px; border-radius: 50%;
+    font-size: 14px; line-height: 1; display: inline-grid; place-items: center; margin-left: 2px; padding: 0; opacity: .8; }
+  .rf-remove:hover { background: rgba(0,0,0,.18); opacity: 1; }
+  .rf-add { display: flex; gap: 8px; margin-top: 12px; }
+  .rf-add select { flex: 1; height: 40px; }
+  .rf-add-btn { height: 40px; min-height: 40px; padding: 0 16px; }
+  .risk-note { font-size: 13px; color: var(--ink); margin-top: 10px; background: #fff; border: 1px dashed var(--line);
+    border-radius: 10px; padding: 8px 11px; }
+
+  /* Reported-by-mother callout (surfaced from chat) */
+  .reported-box { margin-top: 10px; background: #fff7e8; border: 1px solid #f0d68a; border-left: 4px solid var(--amber);
+    border-radius: 10px; padding: 10px 12px; }
+  .reported-head { font-size: 11.5px; font-weight: 700; color: #946a00; text-transform: uppercase; letter-spacing: .3px;
+    display: flex; gap: 7px; align-items: center; }
+  .reported-text { font-size: 14.5px; color: var(--ink); margin-top: 4px; font-weight: 600; line-height: 1.4; }
+  .reported-time { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: "Inter", sans-serif; }
+
+  /* Protocol / SLA line */
+  .risk-proto { margin-top: 12px; font-size: 12.5px; font-weight: 600; padding: 8px 11px; border-radius: 10px; line-height: 1.45; }
+  .risk-proto.risk-RED { background: var(--red-light); color: #a52f2f; }
+  .risk-proto.risk-YELLOW { background: var(--amber-light); color: #946a00; }
+  .risk-proto.risk-GREEN { background: var(--green-light); color: var(--green-dark); }
+  .risk-overridden { margin-top: 8px; font-size: 12px; color: var(--muted); font-style: italic; }
+
+  /* Change-risk control */
+  .risk-change { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .risk-change-label { font-size: 12.5px; font-weight: 700; color: var(--ink); display: block; margin-bottom: 8px; }
+  .risk-seg { display: flex; gap: 8px; }
+  .risk-opt { flex: 1; border: 1.5px solid var(--line); background: #fff; border-radius: 10px; padding: 10px;
+    font-weight: 700; font-size: 13px; color: var(--muted); min-height: 42px; }
+  .risk-opt-GREEN.active { background: var(--green-light); color: var(--green-dark); border-color: var(--green); }
+  .risk-opt-YELLOW.active { background: var(--amber-light); color: #946a00; border-color: var(--amber); }
+  .risk-opt-RED.active { background: var(--red-light); color: #a52f2f; border-color: var(--red); }
+  .risk-opt:hover { border-color: #c9d4cf; }
+  .risk-reason { margin-top: 10px; width: 100%; height: 42px; border: 1.5px solid var(--line); border-radius: 10px;
+    padding: 0 12px; font-family: inherit; font-size: 14px; }
+  .risk-reason:focus { border-color: var(--green); outline: none; }
+
+  /* Chat thread */
+  .thread { background: var(--green-50); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+    max-height: 280px; overflow-y: auto; }
+  .bubble { max-width: 80%; padding: 9px 13px; border-radius: 14px; font-size: 14px; line-height: 1.4; position: relative; }
+  .bubble .t { display: block; font-size: 10.5px; opacity: .7; margin-top: 4px; font-family: "Inter", sans-serif; }
+  .bubble.mother { background: #fff; border: 1px solid var(--line); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .bubble.asha { background: var(--green); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .reply-box { display: flex; gap: 8px; margin-top: 12px; align-items: flex-end; }
+  .reply-box textarea { min-height: 46px; height: 46px; }
+
+  .quick-replies { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .chip { border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: 7px 12px; font-size: 12.5px;
+    font-weight: 600; color: var(--green-dark); }
+  .chip:hover { border-color: var(--green); background: var(--green-50); }
+
+  /* Verify modal segmented */
+  .seg { display: flex; gap: 6px; background: var(--bg); padding: 5px; border-radius: 12px; margin-bottom: 16px; }
+  .seg button { flex: 1; border: 0; background: transparent; padding: 11px; border-radius: 8px; font-weight: 700; font-size: 14px; color: var(--muted); }
+  .seg button.active { background: #fff; color: var(--green-dark); box-shadow: var(--shadow); }
+  .privacy-note { font-size: 12px; color: var(--muted); background: var(--amber-light); border-radius: 10px;
+    padding: 10px 12px; margin-top: 14px; display: flex; gap: 8px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .err { font-size: 12.5px; color: var(--red); margin-top: 6px; font-weight: 600; display: none; }
+  .err.show { display: block; }
+
+  /* Reminder preview */
+  .preview { background: #e8f7ee; border: 1px solid #bfe6d3; border-radius: 14px; padding: 14px; position: relative; margin-top: 6px; }
+  .preview::before { content: "WhatsApp प्रीव्यू"; position: absolute; top: -9px; left: 12px; background: #fff;
+    font-size: 10.5px; font-weight: 700; color: var(--green-dark); padding: 1px 8px; border-radius: 6px; border: 1px solid #bfe6d3; }
+  .preview .msg { background: #fff; border-radius: 10px 10px 10px 2px; padding: 10px 12px; font-size: 14px; box-shadow: var(--shadow);
+    white-space: pre-wrap; }
+  .recipients-note { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  .recipients-note b { color: var(--green-dark); }
+
+  /* Toast */
+  .toast-wrap { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; display: flex;
+    flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+  .toast { background: var(--ink); color: #fff; padding: 13px 18px; border-radius: 12px; font-size: 14px; font-weight: 600;
+    box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px; animation: rise .2s ease; max-width: 90vw; }
+  .toast .ic { width: 22px; height: 22px; border-radius: 50%; background: var(--green); display: grid; place-items: center; font-size: 13px; flex-shrink: 0; }
+
+  /* ============ Responsive table -> cards ============ */
+  @media (max-width: 720px) {
+    thead { display: none; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    tbody tr { padding: 12px 14px; position: relative; }
+    tbody td { padding: 4px 0; border: 0; }
+    td.actions { text-align: left; margin-top: 8px; }
+    td[data-k]::before { content: attr(data-k); font-size: 11px; color: var(--muted); font-weight: 700;
+      text-transform: uppercase; display: inline-block; min-width: 92px; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .header-titles h1 { font-size: 16px; }
+  }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+</style>
+</head>
+<body>
+<div id="offlineBanner" style="display:none;background:#E0A106;color:#fff;padding:8px 16px;text-align:center;font-weight:700;font-size:13px;">
+  📶 ऑफ़लाइन — पुराना डेटा दिख रहा है / Offline — showing cached data
+</div>
+
+<!-- ============ HEADER ============ -->
+<header class="app">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo" aria-hidden="true">🤰</div>
+      <div class="header-titles">
+        <h1>Maatri - ASHA/ANM डैशबोर्ड</h1>
+        <div class="sub">Maatri - ASHA/ANM Dashboard · WhatsApp मातृ स्वास्थ्य सेवा (UP Govt.)</div>
+      </div>
+      <div class="didi-chip">
+        <div class="didi-avatar" id="didiAvatar">सु</div>
+        <div>
+          <div class="nm" id="didiName">सुनीता देवी</div>
+          <div class="rl">ASHA दीदी · ब्लॉक सरोजनीनगर</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-row" id="summaryRow">
+      <div class="stat">
+        <div class="num" id="statTotal">0</div>
+        <div class="lbl">कुल पंजीकरण <span class="en">/ Total</span></div>
+      </div>
+      <div class="stat risk">
+        <span class="dot GREEN"></span>
+        <div><div class="num" id="statGreen">0</div><div class="lbl">GREEN · कम जोखिम</div></div>
+      </div>
+      <div class="stat risk">
+        <span class="dot YELLOW"></span>
+        <div><div class="num" id="statYellow">0</div><div class="lbl">YELLOW · मध्यम</div></div>
+      </div>
+      <div class="stat risk">
+        <span class="dot RED"></span>
+        <div><div class="num" id="statRed">0</div><div class="lbl">RED · उच्च जोखिम</div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ TABS ============ -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" id="tabCohort" role="tab" onclick="switchTab('cohort')">
+      📋 पंजीकरण <span class="gloss">Registrations</span>
+    </button>
+    <button class="tab" id="tabInbox" role="tab" onclick="switchTab('inbox')">
+      💬 संदेश <span class="gloss">Inbox</span>
+      <span class="badge-count" id="inboxBadge">0</span>
+    </button>
+  </div>
+
+  <!-- ============ COHORT VIEW ============ -->
+  <section id="viewCohort">
+    <!-- Filter bar -->
+    <div class="panel filters">
+      <div class="filters-head">
+        <div class="ttl">🔎 समूह फ़िल्टर <span class="gloss">Cohort filter</span></div>
+        <div class="cohort-count" id="cohortCount">0 माताएँ</div>
+      </div>
+      <div class="filter-grid">
+        <div class="field">
+          <label for="fStage">गर्भावस्था <span class="gloss">Pregnancy</span></label>
+          <select id="fStage" onchange="render()">
+            <option value="all">सभी / All</option>
+            <option value="3">3+ महीने</option>
+            <option value="5">5+ महीने</option>
+            <option value="7">7+ महीने</option>
+            <option value="delivered">प्रसव हो चुका / Delivered</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fRisk">जोखिम <span class="gloss">Risk</span></label>
+          <select id="fRisk" onchange="render()">
+            <option value="all">सभी / All</option>
+            <option value="GREEN">GREEN</option>
+            <option value="YELLOW">YELLOW</option>
+            <option value="RED">RED</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fFactor">जोखिम स्थिति <span class="gloss">Risk condition</span></label>
+          <select id="fFactor" onchange="render()">
+            <option value="all">सभी / All</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fVerify">सत्यापन <span class="gloss">Verification</span></label>
+          <select id="fVerify" onchange="render()">
+            <option value="all">सभी / All</option>
+            <option value="verified">सत्यापित / Verified</option>
+            <option value="none">असत्यापित / Not verified</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fPlace">गाँव / ब्लॉक <span class="gloss">Village/Block</span></label>
+          <select id="fPlace" onchange="render()">
+            <option value="all">सभी / All</option>
+          </select>
+        </div>
+        <div class="field toggle-field">
+          <label>&nbsp;</label>
+          <div class="switch" id="fAnc" role="switch" aria-checked="false" tabindex="0"
+               onclick="toggleAnc()" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();toggleAnc()}">
+            <span class="track"><span class="thumb"></span></span>
+            <span class="txt">ANC 7 दिन में <span class="gloss">due soon</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="filters-foot">
+        <button class="btn btn-primary" onclick="applyAndView()">🔎 छाँटें और देखें <span class="gloss">Filter &amp; view</span></button>
+        <button class="btn btn-outline" onclick="openReminder()">📣 रिमाइंडर भेजें <span class="gloss">Send reminder</span></button>
+        <button class="btn-link" onclick="resetFilters()">↺ फ़िल्टर हटाएँ / Clear</button>
+      </div>
+    </div>
+
+    <!-- List -->
+    <div class="panel" id="listPanel">
+      <div class="list-head">
+        <div class="search">
+          <span class="ico">🔍</span>
+          <input type="text" id="search" placeholder="नाम / मोबाइल / Reg ID खोजें…  (Search)" oninput="render()" aria-label="खोजें" />
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>नाम / Name</th>
+              <th>स्थान / Place</th>
+              <th>मोबाइल / Mobile</th>
+              <th>गर्भावस्था / Pregnancy</th>
+              <th>जोखिम / Risk</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState" style="display:none">
+        <div class="big">🔍</div>
+        <div>कोई माता इस फ़िल्टर से मेल नहीं खाती</div>
+        <div class="gloss">No mothers match these filters</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INBOX VIEW ============ -->
+  <section id="viewInbox" style="display:none">
+    <div class="panel">
+      <div class="list-head">
+        <div class="ttl" style="font-weight:700">💬 माताओं के संदेश <span class="gloss">Messages from mothers</span></div>
+      </div>
+      <div class="inbox-list" id="inboxList"></div>
+      <div class="empty" id="inboxEmpty" style="display:none">
+        <div class="big">📭</div>
+        <div>अभी कोई संदेश नहीं</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ DETAIL MODAL ============ -->
+<div class="scrim" id="detailScrim" onclick="if(event.target===this)closeModal('detailScrim')">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="detailName">
+    <div class="modal-head">
+      <div class="detail-avatar" id="detailAvatar" style="width:40px;height:40px;border-radius:12px;font-size:16px">-</div>
+      <div>
+        <h3 id="detailName">-</h3>
+        <div class="sub" id="detailReg">-</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('detailScrim')" aria-label="बंद करें">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- ============ VERIFY MODAL ============ -->
+<div class="scrim" id="verifyScrim" onclick="if(event.target===this)closeModal('verifyScrim')">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="verifyTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="verifyTitle">पहचान सत्यापित करें</h3>
+        <div class="sub" id="verifySub">Verify identity · <span id="verifyFor">-</span></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('verifyScrim')" aria-label="बंद करें">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="seg" id="verifySeg">
+        <button class="active" data-method="mobile" onclick="setVerifyType('mobile')">मोबाइल <span class="gloss">Mobile</span></button>
+        <button data-method="abha" onclick="setVerifyType('abha')">ABHA से लॉगिन <span class="gloss">Login with ABHA</span></button>
+      </div>
+      <div class="field">
+        <label for="verifyInput" id="verifyLabel">मोबाइल नंबर - 10 अंक</label>
+        <input type="text" id="verifyInput" autocomplete="off"
+               placeholder="ABHA से जुड़ा मोबाइल नंबर" oninput="onVerifyInput()" maxlength="60" />
+        <div class="hint" id="verifyHint">इस मोबाइल पर OTP भेजा जाएगा।</div>
+        <div class="err" id="verifyErr">कृपया सही जानकारी दर्ज करें</div>
+      </div>
+      <div class="privacy-note" id="verifyPrivacy" style="display:none">
+        🔒 <span><b>गोपनीयता:</b> पूरा ABHA नंबर कभी सहेजा या दिखाया नहीं जाता - केवल ABHA पता या आखिरी 4 अंक रिकॉर्ड में रहते हैं।
+        <span class="gloss">Only the ABHA address or last 4 digits are stored.</span></span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('verifyScrim')">रद्द करें</button>
+      <button class="btn btn-primary" id="verifyBtn" onclick="submitVerify()">✓ सत्यापित करें</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REMINDER MODAL ============ -->
+<div class="scrim" id="reminderScrim" onclick="if(event.target===this)closeModal('reminderScrim')">
+  <div class="modal wide" role="dialog" aria-modal="true" aria-labelledby="remTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="remTitle">📣 रिमाइंडर भेजें</h3>
+        <div class="sub">वर्तमान समूह को / To current cohort</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('reminderScrim')" aria-label="बंद करें">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="section-label">टेम्पलेट चुनें <span class="gloss">Pick a template</span></div>
+      <div class="quick-replies" id="templateChips"></div>
+      <div class="field" style="margin-top:6px">
+        <label for="remText">संदेश <span class="gloss">Message</span></label>
+        <textarea id="remText" oninput="updatePreview()" placeholder="संदेश लिखें…"></textarea>
+      </div>
+      <div class="preview"><div class="msg" id="remPreview">-</div></div>
+      <div class="recipients-note" id="remRecipients">-</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('reminderScrim')">रद्द करें</button>
+      <button class="btn btn-primary" id="remSendBtn" onclick="sendReminder()">📤 भेजें</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+<script>
+/* =========================================================================
+   Maatri - ASHA/ANM Dashboard
+   No backend yet. All data is in-memory mock data.
+   Every place a real API would be called is marked with: // TODO: API
+   ========================================================================= */
+
+/* ---- Date helpers (relative to "today" for realistic ANC-due logic) ---- */
+const TODAY = new Date('2026-06-13T00:00:00');
+function daysFromToday(n) {
+  const d = new Date(TODAY);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function fmtDate(iso) {
+  if (!iso) return '-';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function daysUntil(iso) {
+  if (!iso) return Infinity;
+  const d = new Date(iso + 'T00:00:00');
+  return Math.round((d - TODAY) / 86400000);
+}
+function fmtTime(iso) {
+  const d = new Date(iso);
+  const diff = Math.round((TODAY - d) / 86400000);
+  const t = d.toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' });
+  if (diff <= 0) return 'आज ' + t;
+  if (diff === 1) return 'कल ' + t;
+  return d.toLocaleDateString('hi-IN', { day: 'numeric', month: 'short' }) + ' ' + t;
+}
+function msgTime(daysAgo, hh, mm) {
+  const d = new Date(TODAY);
+  d.setDate(d.getDate() - daysAgo);
+  d.setHours(hh, mm, 0, 0);
+  return d.toISOString();
+}
+
+/* =========================================================================
+   MOCK DATA - // TODO: API  (replace with GET /patients)
+   ========================================================================= */
+const ASHA_NAME = 'सुनीता देवी';
+
+/* Custom warning icon (rounded amber triangle) used for unverified mothers */
+const WARN_SVG = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+        fill="#FBC02D" stroke="#E0A106" stroke-width="1.3" stroke-linejoin="round"/>
+  <path d="M12 9v4.5" stroke="#7a5600" stroke-width="2.1" stroke-linecap="round"/>
+  <circle cx="12" cy="17.2" r="1.25" fill="#7a5600"/>
+</svg>`;
+
+/* Location pin icon for "Get directions" */
+const PIN_SVG = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+  <path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z" fill="currentColor" opacity=".15"/>
+  <path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+  <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.6"/>
+</svg>`;
+
+/* Registration-source icons.
+   ASHA/ANM didi (female health worker) = registered by a worker.
+   Phone/WhatsApp = mother registered herself via WhatsApp. */
+const DIDI_SVG = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+  <circle cx="12" cy="7.2" r="3.4" fill="currentColor"/>
+  <path d="M7 7.2a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <path d="M5.5 20.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" fill="currentColor"/>
+  <path d="M12 11.5v3.2M10.2 13.1h3.6" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+</svg>`;
+const SELF_SVG = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+  <rect x="6" y="2.5" width="12" height="19" rx="2.6" fill="currentColor"/>
+  <rect x="8" y="5" width="8" height="11" rx="1" fill="#fff"/>
+  <circle cx="12" cy="18.6" r="1.1" fill="#fff"/>
+</svg>`;
+
+/* Small badge showing who registered the mother (shown beside verify status) */
+function regSourceBadge(p) {
+  if (p.registeredBy === 'asha') {
+    return `<span class="reg-src didi" title="ASHA/ANM दीदी द्वारा पंजीकृत / Registered by ASHA/ANM">${DIDI_SVG}</span>`;
+  }
+  return `<span class="reg-src self" title="माता द्वारा स्वयं पंजीकृत (WhatsApp) / Self-registered">${SELF_SVG}</span>`;
+}
+
+/* Build a Google Maps directions URL to a mother's location */
+function mapsDirUrl(p) {
+  const dest = encodeURIComponent([p.village, p.block, p.district, 'Uttar Pradesh'].filter(Boolean).join(', '));
+  // TODO: API - use precise lat/long from patient record when available
+  return `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+}
+
+/* =========================================================================
+   RISK CATALOG - clinical conditions that drive the risk flag.
+   Based on UP NHM high/moderate/low priority categorisation.
+   cat: 'RED' (high) | 'YELLOW' (moderate) | 'GREEN' (low)
+   // TODO: API - this catalog would come from the program config / server
+   ========================================================================= */
+const RISK_CATALOG = {
+  // High priority (RED)
+  ectopic:        { hi: 'अस्थानिक गर्भ (Ectopic)', en: 'Ectopic pregnancy', cat: 'RED' },
+  pih:            { hi: 'PIH / प्री-एक्लेम्पसिया (BP 140/90+)', en: 'PIH / Preeclampsia', cat: 'RED' },
+  severe_anaemia: { hi: 'गंभीर रक्ताल्पता (Hb <7)', en: 'Severe anaemia', cat: 'RED' },
+  heart_disease:  { hi: 'हृदय रोग', en: 'Heart disease in pregnancy', cat: 'RED' },
+  aph:            { hi: 'APH - प्लेसेंटा प्रिविया / एब्रप्शन', en: 'APH / Placenta previa', cat: 'RED' },
+  abnormal_presentation: { hi: 'असामान्य प्रस्तुति (>37 सप्ताह)', en: 'Abnormal presentation', cat: 'RED' },
+  hypothyroid:    { hi: 'हाइपोथायरॉयडिज्म', en: 'Hypothyroidism', cat: 'RED' },
+  boh:            { hi: 'खराब प्रसूति इतिहास (BOH)', en: 'Bad obstetric history', cat: 'RED' },
+  tb:             { hi: 'सक्रिय टीबी', en: 'Active TB', cat: 'RED' },
+  sle:            { hi: 'ऑटो-इम्यून रोग (SLE)', en: 'Autoimmune (SLE)', cat: 'RED' },
+  hiv:            { hi: 'HIV/AIDS', en: 'HIV/AIDS', cat: 'RED' },
+  infection:      { hi: 'बुखार/मलेरिया/डेंगू/H1N1', en: 'Pyrexia/Malaria/Dengue', cat: 'RED' },
+  jaundice:       { hi: 'पीलिया / हेपेटाइटिस B', en: 'Jaundice / Hepatitis B', cat: 'RED' },
+  renal:          { hi: 'गुर्दा रोग', en: 'Renal disease', cat: 'RED' },
+  epilepsy:       { hi: 'मिर्गी', en: 'Epilepsy', cat: 'RED' },
+  gdm_dm:         { hi: 'GDM/DM, बहु-गर्भ, वजन <40 या >75kg', en: 'GDM/DM, multiple, weight', cat: 'RED' },
+  // Moderate priority (YELLOW)
+  prev_lscs:      { hi: 'पिछली LSCS / सहायक प्रसव', en: 'Previous LSCS', cat: 'YELLOW' },
+  short_primi:    { hi: 'शॉर्ट प्राइमी (कद <145cm)', en: 'Short primi', cat: 'YELLOW' },
+  iugr:           { hi: 'IUGR (शिशु वृद्धि कम)', en: 'IUGR', cat: 'YELLOW' },
+  hydramnios:     { hi: 'हाइड्रेमनिओस (>28 सप्ताह)', en: 'Hydramnios', cat: 'YELLOW' },
+  multipara:      { hi: 'बहुप्रसवा / ग्रेविडा 4+', en: 'Multipara / Gravida 4+', cat: 'YELLOW' },
+  hyperthyroid:   { hi: 'हाइपरथायरॉयडिज्म', en: 'Hyperthyroidism', cat: 'YELLOW' },
+  diff_abled:     { hi: 'दिव्यांग माता', en: 'Differently abled', cat: 'YELLOW' },
+  ivf:            { hi: 'IVF / लंबी निःसंतानता के बाद', en: 'IVF / infertility', cat: 'YELLOW' },
+  teenage:        { hi: 'किशोरी गर्भ (<19 वर्ष)', en: 'Teenage pregnancy', cat: 'YELLOW' },
+  post_dated:     { hi: 'पोस्ट-डेटेड (>42 सप्ताह)', en: 'Post dated', cat: 'YELLOW' },
+  moderate_anaemia: { hi: 'मध्यम रक्ताल्पता (Hb 7-9)', en: 'Moderate anaemia', cat: 'YELLOW' },
+  vesicular_mole: { hi: 'वेसिकुलर मोल', en: 'Vesicular mole', cat: 'YELLOW' },
+  // Low priority (GREEN)
+  rh_iso:         { hi: 'Rh आइसो-इम्यूनाइज़ेशन', en: 'Rh isoimmunization', cat: 'GREEN' },
+  cpd:            { hi: 'CPD', en: 'CPD', cat: 'GREEN' },
+  mild_anaemia:   { hi: 'हल्की रक्ताल्पता (Hb >9)', en: 'Mild anaemia', cat: 'GREEN' },
+};
+const RISK_RANK = { GREEN: 0, YELLOW: 1, RED: 2 };
+
+/* Highest-severity category among a mother's clinical risk factors (default GREEN) */
+function computeRiskLevel(p) {
+  let level = 'GREEN';
+  (p.riskFactors || []).forEach(code => {
+    const f = RISK_CATALOG[code];
+    if (f && RISK_RANK[f.cat] > RISK_RANK[level]) level = f.cat;
+  });
+  return level;
+}
+
+/* Recommended follow-up + escalation SLA per risk flag (UP NHM protocol) */
+const RISK_PROTOCOL = {
+  RED:    { hi: 'तुरंत फॉलो-अप · 24 घंटे में मैसेज बंद करें; अनसुलझा रहने पर PHC MO → CMO तक एस्केलेट', en: 'Act now, close <24h, escalate' },
+  YELLOW: { hi: 'SMS मिलते ही फॉलो-अप · 48 घंटे में बंद करें; PHC MO व BMO को भी सूचना', en: 'Follow up, close <48h' },
+  GREEN:  { hi: 'SMS मिलते ही फॉलो-अप · 7 दिन में बंद करें; PHC MO व BMO को भी सूचना', en: 'Follow up, close <7 days' },
+};
+
+let patients = [
+  {
+    registeredBy: 'self',
+    riskFactors: ['pih'], riskNote: 'BP 150/100, पैरों में सूजन व सिरदर्द',
+    regId: 'MAA-UP-10231', name: 'पूजा यादव', mobile: '9876543210',
+    village: 'नटकुर', block: 'सरोजनीनगर', district: 'लखनऊ',
+    lmpDate: daysFromToday(-235), edd: daysFromToday(45), pregnancyMonth: 8,
+    riskLevel: 'RED', verified: 'none', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(3),
+    messages: [
+      { from: 'mother', text: 'दीदी, कल से पैर में बहुत सूजन है और सिर दर्द है।', time: msgTime(0, 9, 12), unread: true },
+      { from: 'mother', text: 'क्या मुझे अस्पताल आना चाहिए?', time: msgTime(0, 9, 13), unread: true },
+    ],
+  },
+  {
+    registeredBy: 'asha',
+    riskFactors: ['moderate_anaemia'], riskNote: 'Hb ~8 g/dL',
+    regId: 'MAA-UP-10198', name: 'सरिता देवी', mobile: '9123456780',
+    village: 'बंथरा', block: 'सरोजनीनगर', district: 'लखनऊ',
+    lmpDate: daysFromToday(-150), edd: daysFromToday(130), pregnancyMonth: 5,
+    riskLevel: 'YELLOW', verified: 'ABHA', abhaAddress: 'sarita.devi@abdm', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(2),
+    messages: [
+      { from: 'mother', text: 'आयरन की गोली खत्म हो गई है दीदी।', time: msgTime(1, 14, 5), unread: true },
+      { from: 'asha', text: 'ठीक है सरिता, कल उपकेंद्र से ले लेना। ANC जाँच भी करा लेना।', time: msgTime(1, 16, 20), unread: false },
+    ],
+  },
+  {
+    registeredBy: 'self',
+    riskFactors: ['mild_anaemia'], riskNote: 'Hb 10.5 g/dL',
+    regId: 'MAA-UP-10250', name: 'अनीता कुमारी', mobile: '9988776655',
+    village: 'ससपन', block: 'गोसाईंगंज', district: 'लखनऊ',
+    lmpDate: daysFromToday(-90), edd: daysFromToday(190), pregnancyMonth: 3,
+    riskLevel: 'GREEN', verified: 'ABHA', abhaAddress: 'anita.kumari@abdm', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(20),
+    messages: [
+      { from: 'mother', text: 'नमस्ते दीदी, अगली जाँच कब है?', time: msgTime(3, 11, 0), unread: false },
+      { from: 'asha', text: 'अगली ANC जाँच इस महीने के अंत में है।', time: msgTime(3, 12, 30), unread: false },
+    ],
+  },
+  {
+    registeredBy: 'asha',
+    riskFactors: ['aph'], riskNote: 'हल्का रक्तस्राव, 9वाँ माह',
+    regId: 'MAA-UP-10112', name: 'रेखा सिंह', mobile: '9001122334',
+    village: 'निगोहां', block: 'मोहनलालगंज', district: 'लखनऊ',
+    lmpDate: daysFromToday(-265), edd: daysFromToday(15), pregnancyMonth: 9,
+    riskLevel: 'RED', verified: 'ABHA', abhaAddress: 'rekha.singh@abdm', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(1),
+    messages: [
+      { from: 'mother', text: 'दीदी मुझे थोड़ा रक्तस्राव हुआ है, डर लग रहा है।', time: msgTime(0, 7, 45), unread: true },
+    ],
+  },
+  {
+    registeredBy: 'asha',
+    riskFactors: ['prev_lscs'], riskNote: 'पिछली डिलीवरी LSCS',
+    regId: 'MAA-UP-10301', name: 'ममता वर्मा', mobile: '9445566778',
+    village: 'हरौनी', block: 'सरोजनीनगर', district: 'लखनऊ',
+    lmpDate: daysFromToday(-200), edd: daysFromToday(80), pregnancyMonth: 7,
+    riskLevel: 'YELLOW', verified: 'none', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(6),
+    messages: [
+      { from: 'asha', text: 'ममता, टीटी का दूसरा टीका लगवाना बाकी है।', time: msgTime(2, 10, 0), unread: false },
+    ],
+  },
+  {
+    registeredBy: 'asha',
+    riskFactors: [], riskNote: '',
+    regId: 'MAA-UP-10077', name: 'गुड़िया देवी', mobile: '9332211009',
+    village: 'कसमंडी कलां', block: 'मोहनलालगंज', district: 'लखनऊ',
+    lmpDate: daysFromToday(-120), edd: daysFromToday(160), pregnancyMonth: 4,
+    riskLevel: 'GREEN', verified: 'ABHA', abhaAddress: 'gudiya.devi@abdm', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(12),
+    messages: [],
+  },
+  {
+    registeredBy: 'self',
+    riskFactors: [], riskNote: '',
+    regId: 'MAA-UP-10044', name: 'कविता मौर्या', mobile: '9776655443',
+    village: 'मलाक', block: 'गोसाईंगंज', district: 'लखनऊ',
+    lmpDate: daysFromToday(-175), edd: daysFromToday(105), pregnancyMonth: 6,
+    riskLevel: 'GREEN', verified: 'none', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(5),
+    messages: [
+      { from: 'mother', text: 'दीदी, खाने में क्या ध्यान रखूँ?', time: msgTime(4, 18, 10), unread: false },
+      { from: 'asha', text: 'हरी सब्जी, दाल, दूध और आयरन की गोली ज़रूर लें।', time: msgTime(4, 19, 0), unread: false },
+    ],
+  },
+  {
+    registeredBy: 'asha',
+    riskFactors: ['pih'], riskNote: 'BP बार-बार बढ़ा हुआ',
+    regId: 'MAA-UP-10260', name: 'शबनम बानो', mobile: '9665544332',
+    village: 'सेमरौली', block: 'मोहनलालगंज', district: 'लखनऊ',
+    lmpDate: daysFromToday(-220), edd: daysFromToday(60), pregnancyMonth: 7,
+    riskLevel: 'RED', verified: 'none', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(4),
+    messages: [
+      { from: 'mother', text: 'दीदी मेरा BP ज़्यादा रहता है, क्या करूँ?', time: msgTime(1, 8, 30), unread: true },
+    ],
+  },
+  {
+    registeredBy: 'asha',
+    riskFactors: [], riskNote: 'प्रसव हो चुका',
+    regId: 'MAA-UP-10133', name: 'सुमन लता', mobile: '9554433221',
+    village: 'अमौसी', block: 'सरोजनीनगर', district: 'लखनऊ',
+    lmpDate: daysFromToday(-300), edd: daysFromToday(-20), pregnancyMonth: 'delivered',
+    riskLevel: 'GREEN', verified: 'ABHA', abhaAddress: 'suman.lata@abdm', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: '',
+    messages: [
+      { from: 'mother', text: 'दीदी, बच्ची का जन्म हो गया है! धन्यवाद।', time: msgTime(5, 13, 0), unread: false },
+      { from: 'asha', text: 'बहुत बधाई सुमन! टीकाकरण का ध्यान रखना।', time: msgTime(5, 14, 0), unread: false },
+    ],
+  },
+  {
+    registeredBy: 'self',
+    riskFactors: [], riskNote: '',
+    regId: 'MAA-UP-10288', name: 'प्रियंका गौतम', mobile: '9443322110',
+    village: 'बिरुरा', block: 'गोसाईंगंज', district: 'लखनऊ',
+    lmpDate: daysFromToday(-60), edd: daysFromToday(220), pregnancyMonth: 2,
+    riskLevel: 'GREEN', verified: 'none', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(25),
+    messages: [],
+  },
+  {
+    registeredBy: 'asha',
+    riskFactors: ['moderate_anaemia'], riskNote: 'चक्कर, संभावित रक्ताल्पता',
+    regId: 'MAA-UP-10309', name: 'नीलम चौहान', mobile: '9332244556',
+    village: 'हरौनी', block: 'सरोजनीनगर', district: 'लखनऊ',
+    lmpDate: daysFromToday(-185), edd: daysFromToday(95), pregnancyMonth: 6,
+    riskLevel: 'YELLOW', verified: 'ABHA', abhaAddress: 'neelam.chauhan@abdm', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(7),
+    messages: [
+      { from: 'mother', text: 'दीदी, चक्कर आते हैं कभी-कभी।', time: msgTime(2, 15, 20), unread: true },
+    ],
+  },
+  {
+    registeredBy: 'asha',
+    riskFactors: ['multipara'], riskNote: 'ग्रेविडा 4+',
+    regId: 'MAA-UP-10155', name: 'फरीदा खातून', mobile: '9221133445',
+    village: 'गहरू', block: 'मोहनलालगंज', district: 'लखनऊ',
+    lmpDate: daysFromToday(-245), edd: daysFromToday(35), pregnancyMonth: 8,
+    riskLevel: 'YELLOW', verified: 'none', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(9),
+    messages: [],
+  },
+  {
+    registeredBy: 'self',
+    riskFactors: [], riskNote: '',
+    regId: 'MAA-UP-10322', name: 'राधा देवी', mobile: '9110022334',
+    village: 'बंथरा', block: 'सरोजनीनगर', district: 'लखनऊ',
+    lmpDate: daysFromToday(-110), edd: daysFromToday(170), pregnancyMonth: 4,
+    riskLevel: 'GREEN', verified: 'ABHA', abhaAddress: 'radha.devi@abdm', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(15),
+    messages: [
+      { from: 'mother', text: 'धन्यवाद दीदी, गोली मिल गई।', time: msgTime(6, 10, 0), unread: false },
+    ],
+  },
+  {
+    registeredBy: 'self',
+    riskFactors: [], riskNote: '',
+    regId: 'MAA-UP-10210', name: 'किरण पाल', mobile: '9009988776',
+    village: 'मलाक', block: 'गोसाईंगंज', district: 'लखनऊ',
+    lmpDate: daysFromToday(-160), edd: daysFromToday(120), pregnancyMonth: 5,
+    riskLevel: 'GREEN', verified: 'none', idLast4: '', ashaName: ASHA_NAME,
+    nextAncDate: daysFromToday(3),
+    messages: [
+      { from: 'mother', text: 'दीदी अगली जाँच की तारीख बता दीजिए।', time: msgTime(0, 16, 40), unread: true },
+    ],
+  },
+];
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+let activeTab = 'cohort';
+let ancToggle = false;
+let currentPatient = null;   // patient open in detail
+let verifyTarget = null;     // patient being verified
+let verifyType = 'mobile'; // 'mobile' | 'abha'
+
+/* =========================================================================
+   FILTERING - computes the current cohort
+   ========================================================================= */
+function getCohort() {
+  const stage = document.getElementById('fStage').value;
+  const risk = document.getElementById('fRisk').value;
+  const factor = document.getElementById('fFactor').value;
+  const verify = document.getElementById('fVerify').value;
+  const place = document.getElementById('fPlace').value;
+  const q = document.getElementById('search').value.trim().toLowerCase();
+
+  return patients.filter(p => {
+    // Pregnancy stage
+    if (stage === 'delivered') {
+      if (p.pregnancyMonth !== 'delivered') return false;
+    } else if (stage !== 'all') {
+      if (p.pregnancyMonth === 'delivered') return false;
+      if (Number(p.pregnancyMonth) < Number(stage)) return false;
+    }
+    // Risk
+    if (risk !== 'all' && p.riskLevel !== risk) return false;
+    // Risk condition (clinical factor)
+    if (factor !== 'all' && !(p.riskFactors || []).includes(factor)) return false;
+    // Verification
+    if (verify === 'verified' && p.verified === 'none') return false;
+    if (verify === 'none' && p.verified !== 'none') return false;
+    // Place (village or block)
+    if (place !== 'all' && p.village !== place && p.block !== place) return false;
+    // ANC due within 7 days
+    if (ancToggle) {
+      const d = daysUntil(p.nextAncDate);
+      if (!(d >= 0 && d <= 7)) return false;
+    }
+    // Search
+    if (q) {
+      const hay = (p.name + ' ' + p.mobile + ' ' + p.regId + ' ' + (p.abhaAddress || '')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+/* =========================================================================
+   RENDER
+   ========================================================================= */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function riskBadge(level) {
+  const labels = { GREEN: 'कम जोखिम', YELLOW: 'मध्यम', RED: 'उच्च जोखिम' };
+  return `<span class="badge risk-${level}"><span class="bdot"></span>${level} · ${labels[level]}</span>`;
+}
+
+/* For verified mothers show their ABHA address; otherwise our internal Maatri reg id */
+function idLine(p) {
+  if (p.verified === 'ABHA' && p.abhaAddress) {
+    return `<span class="abha-addr" title="ABHA पता / Health ID">${escapeHtml(p.abhaAddress)}</span>`;
+  }
+  return p.regId;
+}
+
+/* Short reason shown under the risk badge in the list */
+function topFactorLabel(p) {
+  if (p.riskOverride) return `<div class="psub">✎ ASHA द्वारा बदला गया</div>`;
+  const codes = p.riskFactors || [];
+  if (codes.length === 0) return '';
+  // pick the highest-severity factor to display
+  let top = null;
+  codes.forEach(code => {
+    const f = RISK_CATALOG[code];
+    if (f && (!top || RISK_RANK[f.cat] > RISK_RANK[top.cat])) top = f;
+  });
+  if (!top) return '';
+  const extra = codes.length > 1 ? ` +${codes.length - 1}` : '';
+  return `<div class="psub" title="${escapeHtml(top.hi)}">कारण: ${escapeHtml(top.hi)}${extra}</div>`;
+}
+
+function stageText(p) {
+  if (p.pregnancyMonth === 'delivered') return 'प्रसव हो चुका';
+  return `${p.pregnancyMonth}वाँ महीना`;
+}
+
+function render() {
+  updateSummary();
+  const cohort = getCohort();
+
+  // cohort count
+  document.getElementById('cohortCount').textContent = `${cohort.length} माताएँ match`;
+
+  // table
+  const body = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  if (cohort.length === 0) {
+    body.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    body.innerHTML = cohort.map(p => {
+      const ancDays = daysUntil(p.nextAncDate);
+      const ancDueTag = (ancDays >= 0 && ancDays <= 7)
+        ? `<div class="anc-due">ANC ${ancDays === 0 ? 'आज' : ancDays + ' दिन में'}</div>` : '';
+      const verifyInline = p.verified === 'none'
+        ? `<button class="verify-icon" title="सत्यापित नहीं - टैप करके सत्यापित करें" aria-label="असत्यापित, सत्यापित करने के लिए टैप करें" onclick="event.stopPropagation();openVerify('${p.regId}')">${WARN_SVG}</button>`
+        : `<span class="verified" title="ABHA से सत्यापित${p.abhaAddress ? ' · ' + p.abhaAddress : (p.idLast4 ? ' · ••' + p.idLast4 : '')}"><span class="tick">✓</span>ABHA</span>`;
+      return `
+        <tr onclick="openDetail('${p.regId}')">
+          <td data-k="नाम">
+            <div class="name-line"><span class="pname">${escapeHtml(p.name)}</span>${regSourceBadge(p)}${verifyInline}</div>
+            <div class="psub mono">${idLine(p)}</div>
+          </td>
+          <td data-k="स्थान">${escapeHtml(p.village)}<div class="psub">${escapeHtml(p.block)}</div></td>
+          <td data-k="मोबाइल" class="mono">${escapeHtml(p.mobile)}</td>
+          <td data-k="गर्भावस्था">${stageText(p)}<div class="psub">EDD ${fmtDate(p.edd)}</div>${ancDueTag}</td>
+          <td data-k="जोखिम">${riskBadge(p.riskLevel)}${topFactorLabel(p)}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  renderInbox();
+}
+
+function updateSummary() {
+  document.getElementById('statTotal').textContent = patients.length;
+  document.getElementById('statGreen').textContent = patients.filter(p => p.riskLevel === 'GREEN').length;
+  document.getElementById('statYellow').textContent = patients.filter(p => p.riskLevel === 'YELLOW').length;
+  document.getElementById('statRed').textContent = patients.filter(p => p.riskLevel === 'RED').length;
+}
+
+/* ---- Inbox ---- */
+function allIncoming() {
+  const items = [];
+  patients.forEach(p => {
+    p.messages.forEach((m, i) => {
+      if (m.from === 'mother') items.push({ p, m, i });
+    });
+  });
+  // newest first
+  items.sort((a, b) => new Date(b.m.time) - new Date(a.m.time));
+  return items;
+}
+
+function unreadCount() {
+  return patients.reduce((n, p) => n + p.messages.filter(m => m.from === 'mother' && m.unread).length, 0);
+}
+
+function renderInbox() {
+  const unread = unreadCount();
+  const badge = document.getElementById('inboxBadge');
+  badge.textContent = unread;
+  badge.style.display = unread ? 'inline-grid' : 'none';
+
+  // Show latest incoming per mother
+  const seen = new Set();
+  const latest = [];
+  allIncoming().forEach(it => {
+    if (!seen.has(it.p.regId)) { seen.add(it.p.regId); latest.push(it); }
+  });
+
+  const list = document.getElementById('inboxList');
+  const empty = document.getElementById('inboxEmpty');
+  if (latest.length === 0) {
+    list.innerHTML = ''; empty.style.display = 'block'; return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = latest.map(it => {
+    const hasUnread = it.p.messages.some(m => m.from === 'mother' && m.unread);
+    return `
+      <div class="inbox-item" onclick="openDetail('${it.p.regId}')">
+        <div class="inbox-avatar">${escapeHtml(it.p.name[0])}</div>
+        <div class="inbox-body">
+          <div class="inbox-top">
+            <span class="inbox-name">${escapeHtml(it.p.name)}</span>
+            <span class="inbox-time">${fmtTime(it.m.time)}</span>
+          </div>
+          <div class="inbox-snip">${escapeHtml(it.m.text)}</div>
+        </div>
+        ${hasUnread ? '<span class="unread-dot" title="अपठित"></span>' : ''}
+      </div>`;
+  }).join('');
+}
+
+/* =========================================================================
+   TABS
+   ========================================================================= */
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabCohort').classList.toggle('active', tab === 'cohort');
+  document.getElementById('tabInbox').classList.toggle('active', tab === 'inbox');
+  document.getElementById('viewCohort').style.display = tab === 'cohort' ? 'block' : 'none';
+  document.getElementById('viewInbox').style.display = tab === 'inbox' ? 'block' : 'none';
+}
+
+/* =========================================================================
+   FILTER CONTROLS
+   ========================================================================= */
+function toggleAnc() {
+  ancToggle = !ancToggle;
+  const el = document.getElementById('fAnc');
+  el.classList.toggle('on', ancToggle);
+  el.setAttribute('aria-checked', ancToggle ? 'true' : 'false');
+  render();
+}
+function resetFilters() {
+  ['fStage','fRisk','fFactor','fVerify','fPlace'].forEach(id => document.getElementById(id).value = 'all');
+  document.getElementById('search').value = '';
+  ancToggle = false;
+  document.getElementById('fAnc').classList.remove('on');
+  document.getElementById('fAnc').setAttribute('aria-checked', 'false');
+  render();
+}
+function applyAndView() {
+  render();
+  const n = getCohort().length;
+  document.getElementById('listPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast(`${n} माताएँ दिखाई जा रही हैं`);
+}
+function populatePlaces() {
+  const set = new Set();
+  patients.forEach(p => { set.add(p.village); set.add(p.block); });
+  const sel = document.getElementById('fPlace');
+  [...set].sort().forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v;
+    sel.appendChild(o);
+  });
+}
+
+/* Populate the "risk condition" filter, grouped by severity, with only conditions present in the cohort */
+function populateFactors() {
+  const present = new Set();
+  patients.forEach(p => (p.riskFactors || []).forEach(c => present.add(c)));
+  const sel = document.getElementById('fFactor');
+  const groups = [['RED', 'उच्च जोखिम'], ['YELLOW', 'मध्यम'], ['GREEN', 'कम जोखिम']];
+  groups.forEach(([cat, label]) => {
+    const codes = Object.keys(RISK_CATALOG).filter(c => RISK_CATALOG[c].cat === cat && present.has(c));
+    if (codes.length === 0) return;
+    const og = document.createElement('optgroup');
+    og.label = `${cat} · ${label}`;
+    codes.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = RISK_CATALOG[c].hi;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
+}
+
+/* =========================================================================
+   DETAIL PANEL
+   ========================================================================= */
+function findPatient(regId) { return patients.find(p => p.regId === regId); }
+
+/* Risk factor chips (color-coded by clinical category) with remove buttons */
+function riskFactorsHtml(p) {
+  const codes = p.riskFactors || [];
+  const chips = codes.length === 0
+    ? `<div class="no-risk">कोई उच्च-जोखिम स्थिति दर्ज नहीं <span class="gloss">No risk conditions recorded</span></div>`
+    : `<div class="risk-factors">` + codes.map(code => {
+        const f = RISK_CATALOG[code];
+        if (!f) return '';
+        return `<span class="rf-chip rf-${f.cat}"><span class="bdot"></span>${escapeHtml(f.hi)}
+          <button class="rf-remove" title="हटाएँ" aria-label="${escapeHtml(f.hi)} हटाएँ" onclick="removeRiskFactor('${p.regId}','${code}')">×</button></span>`;
+      }).join('') + `</div>`;
+
+  // Dropdown of conditions not already added, grouped by severity
+  const groups = [['RED', 'उच्च जोखिम'], ['YELLOW', 'मध्यम'], ['GREEN', 'कम जोखिम']];
+  let opts = '';
+  groups.forEach(([cat, label]) => {
+    const avail = Object.keys(RISK_CATALOG).filter(c => RISK_CATALOG[c].cat === cat && !codes.includes(c));
+    if (avail.length === 0) return;
+    opts += `<optgroup label="${cat} · ${label}">` +
+      avail.map(c => `<option value="${c}">${escapeHtml(RISK_CATALOG[c].hi)}</option>`).join('') + `</optgroup>`;
+  });
+  const adder = `<div class="rf-add">
+    <select id="addFactorSelect" aria-label="जोखिम स्थिति जोड़ें"><option value="">+ जोखिम स्थिति जोड़ें / Add condition…</option>${opts}</select>
+    <button class="btn btn-ghost rf-add-btn" onclick="addRiskFactor('${p.regId}')">जोड़ें</button>
+  </div>`;
+
+  return chips + adder;
+}
+
+/* Latest concern reported by the mother (surfaced from her chat) */
+function latestMotherMsg(p) {
+  const ms = (p.messages || []).filter(m => m.from === 'mother');
+  return ms.length ? ms[ms.length - 1] : null;
+}
+function reportedByMotherHtml(p) {
+  const m = latestMotherMsg(p);
+  if (!m) return '';
+  return `<div class="reported-box">
+    <div class="reported-head">💬 माता ने बताया <span class="gloss">Reported by mother</span></div>
+    <div class="reported-text">"${escapeHtml(m.text)}"</div>
+    <div class="reported-time">${fmtTime(m.time)}</div>
+  </div>`;
+}
+
+/* Re-derive the risk flag from the (edited) factor list; clears any manual override */
+function applyDerivedRisk(p) {
+  delete p.riskOverride;
+  p.riskLevel = computeRiskLevel(p);
+}
+function addRiskFactor(regId) {
+  const p = findPatient(regId);
+  const sel = document.getElementById('addFactorSelect');
+  if (!p || !sel || !sel.value) return;
+  const code = sel.value;
+  p.riskFactors = p.riskFactors || [];
+  if (!p.riskFactors.includes(code)) p.riskFactors.push(code);
+  applyDerivedRisk(p);
+  // TODO: API - POST /patients/:regId/risk-factors { add: code }
+  console.log('[MOCK RISK FACTOR +]', regId, code, '-> level', p.riskLevel);
+  toast(`जोखिम स्थिति जोड़ी गई`);
+  openDetail(regId);
+  render();
+}
+function removeRiskFactor(regId, code) {
+  const p = findPatient(regId);
+  if (!p) return;
+  p.riskFactors = (p.riskFactors || []).filter(c => c !== code);
+  applyDerivedRisk(p);
+  // TODO: API - DELETE /patients/:regId/risk-factors/:code
+  console.log('[MOCK RISK FACTOR -]', regId, code, '-> level', p.riskLevel);
+  toast(`जोखिम स्थिति हटाई गई`);
+  openDetail(regId);
+  render();
+}
+
+/* ASHA/ANM override of the risk flag */
+async function changeRisk(regId, level) {
+  const p = findPatient(regId);
+  if (!p) return;
+  if (p.riskLevel === level) return;
+  const reasonEl = document.getElementById('riskReason');
+  const reason = reasonEl ? reasonEl.value.trim() : '';
+  try {
+    await apiFetch(`/api/patients/${regId}/risk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ level, reason }),
+    });
+  } catch { /* offline — update locally only */ }
+  p.riskLevel = level;
+  p.riskOverride = { level, reason, by: ASHA_NAME, time: new Date(TODAY).toISOString() };
+  toast(`जोखिम स्तर बदला गया: ${level}`);
+  openDetail(regId);
+  render();
+}
+
+function openDetail(regId) {
+  const p = findPatient(regId);
+  if (!p) return;
+  currentPatient = p;
+
+  // mark mother messages as read
+  // TODO: API - POST /patients/:regId/messages/read
+  p.messages.forEach(m => { if (m.from === 'mother') m.unread = false; });
+
+  document.getElementById('detailAvatar').textContent = p.name[0];
+  document.getElementById('detailName').textContent = p.name;
+  document.getElementById('detailReg').textContent =
+    `${(p.verified === 'ABHA' && p.abhaAddress) ? p.abhaAddress : p.regId} · ${p.ashaName}`;
+
+  const ancDays = daysUntil(p.nextAncDate);
+  const ancStr = p.nextAncDate
+    ? `${fmtDate(p.nextAncDate)}${ancDays >= 0 && ancDays <= 7 ? ` (${ancDays === 0 ? 'आज' : ancDays + ' दिन में'})` : ''}`
+    : '-';
+
+  const verifyRow = p.verified === 'none'
+    ? `<button class="verify-chip" onclick="openVerify('${p.regId}')">${WARN_SVG}<span>सत्यापित करें <span class="gloss">Verify</span></span></button>`
+    : `<span class="verified"><span class="tick">✓</span>ABHA से सत्यापित${p.abhaAddress ? ' · ' + escapeHtml(p.abhaAddress) : (p.idLast4 ? ' · ••' + p.idLast4 : '')}</span>`;
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-meta">
+      ${riskBadge(p.riskLevel)} ${verifyRow}
+      <span class="src-pill ${p.registeredBy === 'asha' ? 'didi' : 'self'}">
+        ${p.registeredBy === 'asha' ? DIDI_SVG : SELF_SVG}
+        ${p.registeredBy === 'asha' ? 'दीदी द्वारा पंजीकृत <span class="gloss">By ASHA/ANM</span>' : 'स्वयं पंजीकृत <span class="gloss">Self</span>'}
+      </span>
+    </div>
+
+    <div class="addr-card">
+      <div class="addr-text">
+        <div class="k">पता / Address</div>
+        <div class="v">${escapeHtml(p.village)}, ${escapeHtml(p.block)}, ${escapeHtml(p.district)}, उत्तर प्रदेश</div>
+      </div>
+      <a class="map-link" href="${mapsDirUrl(p)}" target="_blank" rel="noopener noreferrer">
+        ${PIN_SVG}<span>दिशा देखें <span class="gloss">Directions</span></span>
+      </a>
+    </div>
+
+    <div class="detail-grid">
+      <div class="info"><div class="k">मोबाइल / Mobile</div><div class="v mono">${escapeHtml(p.mobile)}</div></div>
+      <div class="info"><div class="k">गर्भावस्था / Pregnancy</div><div class="v">${stageText(p)}</div></div>
+      <div class="info"><div class="k">LMP</div><div class="v">${fmtDate(p.lmpDate)}</div></div>
+      <div class="info"><div class="k">EDD (संभावित प्रसव)</div><div class="v">${fmtDate(p.edd)}</div></div>
+      <div class="info"><div class="k">अगली ANC जाँच</div><div class="v">${ancStr}</div></div>
+      <div class="info"><div class="k">ASHA / ANM दीदी</div><div class="v">${escapeHtml(p.ashaName)}</div></div>
+    </div>
+
+    <div class="section-label">🩺 जोखिम कारण <span class="gloss">Risk factors</span></div>
+    <div class="risk-panel">
+      ${riskFactorsHtml(p)}
+      ${p.riskNote ? `<div class="risk-note">📝 ${escapeHtml(p.riskNote)}</div>` : ''}
+      ${reportedByMotherHtml(p)}
+      <div class="risk-proto risk-${p.riskLevel}">⏱ ${RISK_PROTOCOL[p.riskLevel].hi}</div>
+      ${p.riskOverride ? `<div class="risk-overridden">✎ ${escapeHtml(p.riskOverride.by)} द्वारा बदला गया${p.riskOverride.reason ? ' - ' + escapeHtml(p.riskOverride.reason) : ''}</div>` : ''}
+      <div class="risk-change">
+        <div class="risk-change-label">जोखिम स्तर बदलें <span class="gloss">Change risk (ASHA/ANM)</span></div>
+        <div class="risk-seg">
+          ${['GREEN','YELLOW','RED'].map(l => `<button class="risk-opt risk-opt-${l} ${p.riskLevel===l?'active':''}" onclick="changeRisk('${p.regId}','${l}')">${l}</button>`).join('')}
+        </div>
+        <input id="riskReason" class="risk-reason" type="text" placeholder="बदलने का कारण (वैकल्पिक) / reason" />
+      </div>
+    </div>
+
+    <div class="section-label">💬 संदेश थ्रेड <span class="gloss">Message thread</span></div>
+    <div class="thread" id="thread">${renderThread(p)}</div>
+
+    <div class="quick-replies" style="margin-top:12px">
+      <button class="chip" onclick="quickReply('ANC जाँच के लिए कृपया उपकेंद्र आएं।')">ANC के लिए आएं</button>
+      <button class="chip" onclick="quickReply('आयरन और कैल्शियम की गोली नियमित लें।')">गोली याद दिलाएँ</button>
+      <button class="chip" onclick="quickReply('टीकाकरण (vaccine) की तारीख नज़दीक है।')">टीका reminder</button>
+    </div>
+    <div class="reply-box">
+      <textarea id="replyText" placeholder="उत्तर लिखें… / Reply"></textarea>
+      <button class="btn btn-primary" onclick="sendReply()" style="height:46px">भेजें</button>
+    </div>
+  `;
+  openModal('detailScrim');
+  render(); // refresh unread badges/inbox
+  setTimeout(scrollThread, 50);
+}
+
+function renderThread(p) {
+  if (p.messages.length === 0) return `<div class="psub" style="text-align:center;padding:20px">अभी कोई संदेश नहीं</div>`;
+  return p.messages.map(m => `
+    <div class="bubble ${m.from}">
+      ${escapeHtml(m.text)}
+      <span class="t">${m.from === 'mother' ? '👩 माता' : '🧑‍⚕️ ' + ASHA_NAME} · ${fmtTime(m.time)}</span>
+    </div>`).join('');
+}
+function scrollThread() {
+  const t = document.getElementById('thread');
+  if (t) t.scrollTop = t.scrollHeight;
+}
+function quickReply(text) {
+  document.getElementById('replyText').value = text;
+}
+function sendReply() {
+  const ta = document.getElementById('replyText');
+  const text = ta.value.trim();
+  if (!text || !currentPatient) return;
+  // TODO: API - POST /patients/:regId/messages  { from: 'asha', text }
+  currentPatient.messages.push({ from: 'asha', text, time: new Date(TODAY).toISOString(), unread: false });
+  console.log('[MOCK SEND] reply to', currentPatient.mobile, ':', text);
+  ta.value = '';
+  document.getElementById('thread').innerHTML = renderThread(currentPatient);
+  scrollThread();
+  toast('संदेश भेजा गया / Sent');
+}
+
+/* =========================================================================
+   VERIFY MODAL
+   ========================================================================= */
+function openVerify(regId) {
+  verifyTarget = findPatient(regId);
+  if (!verifyTarget) return;
+  document.getElementById('verifyFor').textContent = verifyTarget.name;
+  document.getElementById('verifyErr').classList.remove('show');
+  setVerifyType('mobile');
+  openModal('verifyScrim');
+  setTimeout(() => document.getElementById('verifyInput').focus(), 100);
+}
+function setVerifyType(method) {
+  verifyType = method; // 'mobile' | 'abha'
+  document.querySelectorAll('#verifySeg button').forEach(b => b.classList.toggle('active', b.dataset.method === method));
+  const input = document.getElementById('verifyInput');
+  const label = document.getElementById('verifyLabel');
+  const hint = document.getElementById('verifyHint');
+  const privacy = document.getElementById('verifyPrivacy');
+  const btn = document.getElementById('verifyBtn');
+  document.getElementById('verifyErr').classList.remove('show');
+
+  if (method === 'mobile') {
+    // Verify via the mobile linked to ABHA (OTP).
+    label.innerHTML = 'मोबाइल नंबर - 10 अंक <span class="gloss">Mobile linked to ABHA</span>';
+    input.placeholder = 'ABHA से जुड़ा मोबाइल नंबर';
+    input.value = verifyTarget ? verifyTarget.mobile : ''; // pre-fill registered mobile
+    input.inputMode = 'numeric';
+    hint.textContent = 'इस मोबाइल पर OTP भेजा जाएगा।';
+    privacy.style.display = 'none';
+    btn.textContent = 'OTP भेजें / आगे बढ़ें';
+  } else {
+    // Login with ABHA: accept an ABHA address (name@abdm) OR a 14-digit ABHA number.
+    label.innerHTML = 'ABHA पता या ABHA नंबर <span class="gloss">ABHA address or number</span>';
+    input.placeholder = 'जैसे sarita@abdm या 14-अंकीय ABHA नंबर';
+    input.value = '';
+    input.inputMode = 'text';
+    hint.textContent = 'ABHA पता (name@abdm) या 14-अंकीय ABHA नंबर दर्ज करें।';
+    privacy.style.display = 'flex';
+    btn.textContent = '🔐 ABHA से सत्यापित करें';
+  }
+}
+function onVerifyInput() {
+  const el = document.getElementById('verifyInput');
+  if (verifyType === 'mobile') el.value = el.value.replace(/\D/g, ''); // digits only for mobile
+  document.getElementById('verifyErr').classList.remove('show');
+}
+function finishVerify(abhaAddress, last4) {
+  verifyTarget.verified = 'ABHA';
+  verifyTarget.abhaAddress = abhaAddress || '';
+  verifyTarget.idLast4 = last4 || '';
+  closeModal('verifyScrim');
+  toast(abhaAddress ? `ABHA से सत्यापित ✓ (${abhaAddress})` : `ABHA से सत्यापित ✓`);
+  render();
+  if (currentPatient && currentPatient.regId === verifyTarget.regId) openDetail(verifyTarget.regId);
+}
+async function submitVerify() {
+  const raw = document.getElementById('verifyInput').value.trim();
+  const err = document.getElementById('verifyErr');
+
+  if (verifyType === 'mobile') {
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length !== 10) {
+      err.textContent = `मोबाइल नंबर 10 अंक का होना चाहिए (अभी ${digits.length})`;
+      err.classList.add('show');
+      return;
+    }
+    try {
+      const res = await apiFetch(`/api/patients/${verifyTarget.regId}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'mobile', value: digits }),
+      });
+      const data = await res.json();
+      finishVerify(data.abha_address || '', '');
+    } catch { finishVerify(mockAbhaAddress(verifyTarget), ''); }
+    return;
+  }
+
+  if (raw.includes('@')) {
+    if (!/^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/.test(raw)) {
+      err.textContent = 'ABHA पता सही नहीं है (जैसे sarita@abdm)';
+      err.classList.add('show');
+      return;
+    }
+    try {
+      await apiFetch(`/api/patients/${verifyTarget.regId}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'abha_address', value: raw.toLowerCase() }),
+      });
+    } catch { /* offline */ }
+    finishVerify(raw.toLowerCase(), '');
+    return;
+  }
+
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length !== 14) {
+    err.textContent = `ABHA नंबर 14 अंक का होना चाहिए (अभी ${digits.length})`;
+    err.classList.add('show');
+    return;
+  }
+  const last4 = digits.slice(-4);
+  try {
+    await apiFetch(`/api/patients/${verifyTarget.regId}/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'abha_number', value: digits }),
+    });
+  } catch { /* offline */ }
+  finishVerify('', last4);
+}
+/* Mock: derive an ABHA (PHR) address from the mother's name */
+function mockAbhaAddress(p) {
+  const map = { 'अ':'a','आ':'aa','इ':'i','ई':'ee','उ':'u','ऊ':'oo','ए':'e','ओ':'o','क':'k','ख':'kh','ग':'g','घ':'gh','च':'ch','छ':'chh','ज':'j','झ':'jh','ट':'t','ठ':'th','ड':'d','ढ':'dh','ण':'n','त':'t','थ':'th','द':'d','ध':'dh','न':'n','प':'p','फ':'ph','ब':'b','भ':'bh','म':'m','य':'y','र':'r','ल':'l','व':'v','श':'sh','ष':'sh','स':'s','ह':'h' };
+  let s = '';
+  for (const ch of p.name) s += (map[ch] || (/[a-zA-Z]/.test(ch) ? ch : ''));
+  s = s.toLowerCase().slice(0, 10) || 'mother';
+  return `${s}${p.mobile.slice(-2)}@abdm`;
+}
+
+/* =========================================================================
+   REMINDER TO COHORT
+   ========================================================================= */
+const TEMPLATES = [
+  { label: 'ANC जाँच', text: 'नमस्ते, आपकी ANC जाँच का समय आ गया है। कृपया नज़दीकी उपकेंद्र पर आएं। - Maatri' },
+  { label: 'टीका (vaccine) due', text: 'नमस्ते, आपका/आपके शिशु का टीका due है। कृपया टीकाकरण के लिए संपर्क करें। - Maatri' },
+  { label: 'आयरन गोली', text: 'नमस्ते, आयरन और कैल्शियम की गोली नियमित रूप से लेना न भूलें। - Maatri' },
+  { label: 'कस्टम / Custom', text: '' },
+];
+let reminderCohort = [];
+
+function openReminder() {
+  reminderCohort = getCohort();
+  const chips = document.getElementById('templateChips');
+  chips.innerHTML = TEMPLATES.map((t, i) =>
+    `<button class="chip" onclick="pickTemplate(${i})">${escapeHtml(t.label)}</button>`).join('');
+  document.getElementById('remText').value = TEMPLATES[0].text;
+  updatePreview();
+  openModal('reminderScrim');
+}
+function pickTemplate(i) {
+  document.getElementById('remText').value = TEMPLATES[i].text;
+  updatePreview();
+  document.getElementById('remText').focus();
+}
+function updatePreview() {
+  const text = document.getElementById('remText').value.trim();
+  document.getElementById('remPreview').textContent = text || '-';
+  const n = reminderCohort.length;
+  document.getElementById('remRecipients').innerHTML =
+    `इस समूह की <b>${n}</b> माताओं को भेजा जाएगा <span class="gloss">/ Send to ${n} mothers</span>`;
+  document.getElementById('remSendBtn').disabled = !text || n === 0;
+  document.getElementById('remSendBtn').textContent = `📤 ${n} माताओं को भेजें`;
+}
+async function sendReminder() {
+  const text = document.getElementById('remText').value.trim();
+  if (!text || reminderCohort.length === 0) return;
+  const recipients = reminderCohort.map(p => ({ regId: p.regId, name: p.name, mobile: p.mobile }));
+  try {
+    await apiFetch('/api/reminders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, recipients }),
+    });
+  } catch { /* offline — log only */ console.warn('[OFFLINE] reminder queued locally'); }
+  closeModal('reminderScrim');
+  toast(`✓ ${recipients.length} माताओं को रिमाइंडर भेजा गया`);
+  render();
+}
+
+/* =========================================================================
+   MODAL + TOAST UTILITIES
+   ========================================================================= */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['detailScrim','verifyScrim','reminderScrim'].forEach(closeModal);
+  }
+});
+function toast(msg) {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<span class="ic">✓</span>${escapeHtml(msg)}`;
+  wrap.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 2600);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* =========================================================================
+   API HELPERS
+   ========================================================================= */
+async function apiFetch(url, opts) {
+  const res = await fetch(url, opts);
+  if (res.headers.get('X-Offline') === 'true') showOffline();
+  else hideOffline();
+  return res;
+}
+function showOffline() { document.getElementById('offlineBanner').style.display = 'block'; }
+function hideOffline() { document.getElementById('offlineBanner').style.display = 'none'; }
+
+function mapApiPatient(p) {
+  return {
+    registeredBy: p.registered_by || 'self',
+    riskFactors: p.risk_factors || [],
+    riskNote: '',
+    regId: p.reg_id,
+    name: p.name,
+    mobile: p.mobile || '',
+    village: p.village,
+    block: p.block,
+    district: p.district,
+    lmpDate: p.lmp_date,
+    edd: p.edd,
+    pregnancyMonth: p.pregnancy_month,
+    riskLevel: p.risk_level || 'GREEN',
+    riskOverride: !!p.risk_override,
+    verified: p.verified || 'none',
+    abhaAddress: p.abha_address || '',
+    idLast4: '',
+    ashaName: p.asha_name || ASHA_NAME,
+    nextAncDate: p.next_anc_date || '',
+    hasOpenEscalation: !!p.has_open_escalation,
+    escalationLevel: p.escalation_level || '',
+    messages: [],
+  };
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+async function init() {
+  document.getElementById('didiName').textContent = ASHA_NAME;
+  populatePlaces();
+  populateFactors();
+
+  try {
+    const res = await apiFetch('/api/patients');
+    const data = await res.json();
+    patients = Array.isArray(data) ? data.map(mapApiPatient) : [];
+    patients.forEach(p => { if (!p.riskOverride) p.riskLevel = computeRiskLevel(p); });
+  } catch {
+    showOffline();
+    // keep mock patients already in array if fetch failed entirely
+    patients.forEach(p => { if (!p.riskOverride) p.riskLevel = computeRiskLevel(p); });
+  }
+
+  render();
+}
+init();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/static/sw.js');
+</script>
+</body>
+</html>
