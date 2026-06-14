@@ -354,6 +354,38 @@
   .seg { display: flex; gap: 6px; background: var(--bg); padding: 5px; border-radius: 12px; margin-bottom: 16px; }
   .seg button { flex: 1; border: 0; background: transparent; padding: 11px; border-radius: 8px; font-weight: 700; font-size: 14px; color: var(--muted); }
   .seg button.active { background: #fff; color: var(--green-dark); box-shadow: var(--shadow); }
+  /* Row kebab (three-dot) menu */
+  .row-actions { position: relative; text-align: right; white-space: nowrap; }
+  .kebab { background: transparent; border: 0; width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+    color: var(--muted); font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+  .kebab:hover { background: var(--bg); color: var(--green-dark); }
+  .row-menu { position: fixed; z-index: 50; min-width: 230px; background: #fff; border: 1px solid var(--line);
+    border-radius: 12px; box-shadow: var(--shadow-lg); padding: 6px; display: none; }
+  .row-menu.open { display: block; }
+  .row-menu button { width: 100%; text-align: left; border: 0; background: transparent; padding: 10px 12px;
+    border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer; display: flex; gap: 9px; align-items: center; }
+  .row-menu button:hover { background: var(--bg); }
+  .row-menu button.danger { color: var(--red); }
+  .row-menu button.danger:hover { background: var(--red-light); }
+  .row-menu .gloss { font-weight: 500; }
+
+  /* Invalid (flagged) entry */
+  tr.invalid-row td { opacity: .55; }
+  tr.invalid-row td.row-actions { opacity: 1; }
+  .invalid-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700;
+    color: var(--red); background: var(--red-light); border-radius: 999px; padding: 2px 9px; margin-left: 6px; }
+
+  /* Reason picker (mark invalid) */
+  .reason-list { display: flex; flex-direction: column; gap: 8px; }
+  .reason-opt { display: flex; align-items: center; gap: 11px; border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 13px 14px; cursor: pointer; font-size: 14.5px; font-weight: 600; transition: border-color .15s, background .15s; }
+  .reason-opt:hover { border-color: var(--green); }
+  .reason-opt.sel { border-color: var(--green); background: var(--green-light); }
+  .reason-opt input { accent-color: var(--green); width: 18px; height: 18px; }
+  .reason-opt .gloss { font-weight: 500; }
+  #invalidOther { width: 100%; margin-top: 12px; border: 1.5px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; font-size: 14px; font-family: inherit; display: none; }
+  #invalidOther.show { display: block; }
   .privacy-note { font-size: 12px; color: var(--muted); background: var(--amber-light); border-radius: 10px;
     padding: 10px 12px; margin-top: 14px; display: flex; gap: 8px; }
   .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
@@ -383,8 +415,11 @@
     tbody tr { padding: 12px 14px; position: relative; }
     tbody td { padding: 4px 0; border: 0; }
     td.actions { text-align: left; margin-top: 8px; }
+    td.row-actions { position: absolute; top: 8px; right: 8px; padding: 0; width: auto; }
+    td.row-actions::before { content: none; }
     td[data-k]::before { content: attr(data-k); font-size: 11px; color: var(--muted); font-weight: 700;
       text-transform: uppercase; display: inline-block; min-width: 92px; }
+    td[data-k=""]::before { content: none; min-width: 0; }
     .detail-grid { grid-template-columns: 1fr; }
     .header-titles h1 { font-size: 16px; }
   }
@@ -530,6 +565,7 @@
               <th>मोबाइल / Mobile</th>
               <th>गर्भावस्था / Pregnancy</th>
               <th>जोखिम / Risk</th>
+              <th aria-label="कार्रवाई / Actions"></th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -579,16 +615,12 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="verifyTitle">
     <div class="modal-head">
       <div>
-        <h3 id="verifyTitle">पहचान सत्यापित करें</h3>
-        <div class="sub" id="verifySub">Verify identity · <span id="verifyFor">-</span></div>
+        <h3 id="verifyTitle">ABHA लिंक करें <span class="gloss">Link ABHA</span></h3>
+        <div class="sub" id="verifySub">Link ABHA · <span id="verifyFor">-</span></div>
       </div>
       <button class="modal-close" onclick="closeModal('verifyScrim')" aria-label="बंद करें">✕</button>
     </div>
     <div class="modal-body">
-      <div class="seg" id="verifySeg">
-        <button class="active" data-method="mobile" onclick="setVerifyType('mobile')">मोबाइल <span class="gloss">Mobile</span></button>
-        <button data-method="abha" onclick="setVerifyType('abha')">ABHA से लॉगिन <span class="gloss">Login with ABHA</span></button>
-      </div>
       <div class="field">
         <label for="verifyInput" id="verifyLabel">मोबाइल नंबर - 10 अंक</label>
         <input type="text" id="verifyInput" autocomplete="off"
@@ -631,6 +663,40 @@
     <div class="modal-foot">
       <button class="btn btn-outline" onclick="closeModal('reminderScrim')">रद्द करें</button>
       <button class="btn btn-primary" id="remSendBtn" onclick="sendReminder()">📤 भेजें</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ROW KEBAB MENU ============ -->
+<div class="row-menu" id="rowMenu">
+  <button onclick="openInvalidFromMenu()" class="danger" id="rowMenuInvalid">⊘ <span>प्रविष्टि अमान्य करें <span class="gloss">Mark entry as invalid</span></span></button>
+  <button onclick="restoreFromMenu()" id="rowMenuRestore" style="display:none">↺ <span>फिर मान्य करें <span class="gloss">Mark as valid</span></span></button>
+</div>
+
+<!-- ============ MARK INVALID MODAL ============ -->
+<div class="scrim" id="invalidScrim" onclick="if(event.target===this)closeModal('invalidScrim')">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="invalidTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="invalidTitle">प्रविष्टि अमान्य करें <span class="gloss">Mark entry invalid</span></h3>
+        <div class="sub">कारण चुनें · Select a reason · <span id="invalidFor">-</span></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('invalidScrim')" aria-label="बंद करें">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="reason-list" id="reasonList">
+        <label class="reason-opt"><input type="radio" name="invalidReason" value="spam" onchange="onReasonChange()"><span>स्पैम <span class="gloss">Spam</span></span></label>
+        <label class="reason-opt"><input type="radio" name="invalidReason" value="incorrect" onchange="onReasonChange()"><span>जानकारी गलत है <span class="gloss">Details are incorrect</span></span></label>
+        <label class="reason-opt"><input type="radio" name="invalidReason" value="duplicate" onchange="onReasonChange()"><span>दोहरी प्रविष्टि <span class="gloss">Duplicate entry</span></span></label>
+        <label class="reason-opt"><input type="radio" name="invalidReason" value="test" onchange="onReasonChange()"><span>परीक्षण / नकली प्रविष्टि <span class="gloss">Test / fake entry</span></span></label>
+        <label class="reason-opt"><input type="radio" name="invalidReason" value="other" onchange="onReasonChange()"><span>अन्य <span class="gloss">Other</span></span></label>
+      </div>
+      <textarea id="invalidOther" rows="2" placeholder="कारण लिखें… / Describe the reason" oninput="document.getElementById('invalidErr').classList.remove('show')"></textarea>
+      <div class="err" id="invalidErr">कृपया एक कारण चुनें</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal('invalidScrim')">रद्द करें</button>
+      <button class="btn btn-primary" id="invalidBtn" onclick="submitInvalid()" style="background:var(--red)">⊘ अमान्य करें</button>
     </div>
   </div>
 </div>
@@ -965,6 +1031,17 @@ let ancToggle = false;
 let currentPatient = null;   // patient open in detail
 let verifyTarget = null;     // patient being verified
 let verifyType = 'mobile'; // 'mobile' | 'abha'
+let rowMenuRegId = null;     // patient whose kebab menu is open
+let invalidTarget = null;    // patient being marked invalid
+
+const INVALID_REASONS = {
+  spam: 'स्पैम / Spam',
+  incorrect: 'जानकारी गलत है / Details are incorrect',
+  duplicate: 'दोहरी प्रविष्टि / Duplicate entry',
+  test: 'परीक्षण / नकली प्रविष्टि / Test entry',
+  other: 'अन्य / Other',
+};
+function invalidReasonLabel(code) { return INVALID_REASONS[code] || 'अमान्य / Invalid'; }
 
 /* =========================================================================
    FILTERING - computes the current cohort
@@ -1071,16 +1148,23 @@ function render() {
       const verifyInline = p.verified === 'none'
         ? `<button class="verify-icon" title="सत्यापित नहीं - टैप करके सत्यापित करें" aria-label="असत्यापित, सत्यापित करने के लिए टैप करें" onclick="event.stopPropagation();openVerify('${p.regId}')">${WARN_SVG}</button>`
         : `<span class="verified" title="ABHA से सत्यापित${p.abhaAddress ? ' · ' + p.abhaAddress : (p.idLast4 ? ' · ••' + p.idLast4 : '')}"><span class="tick">✓</span>ABHA</span>`;
+      const invalid = p.status === 'invalid';
+      const invalidTag = invalid
+        ? `<span class="invalid-tag" title="${escapeHtml(invalidReasonLabel(p.invalidReason) + (p.invalidNote ? ' — ' + p.invalidNote : ''))}">⊘ अमान्य</span>`
+        : '';
       return `
-        <tr onclick="openDetail('${p.regId}')">
+        <tr class="${invalid ? 'invalid-row' : ''}" onclick="openDetail('${p.regId}')">
           <td data-k="नाम">
-            <div class="name-line"><span class="pname">${escapeHtml(p.name)}</span>${regSourceBadge(p)}${verifyInline}</div>
+            <div class="name-line"><span class="pname">${escapeHtml(p.name)}</span>${regSourceBadge(p)}${verifyInline}${invalidTag}</div>
             <div class="psub mono">${idLine(p)}</div>
           </td>
           <td data-k="स्थान">${escapeHtml(p.village)}<div class="psub">${escapeHtml(p.block)}</div></td>
           <td data-k="मोबाइल" class="mono">${escapeHtml(p.mobile)}</td>
           <td data-k="गर्भावस्था">${stageText(p)}<div class="psub">EDD ${fmtDate(p.edd)}</div>${ancDueTag}</td>
           <td data-k="जोखिम">${riskBadge(p.riskLevel)}${topFactorLabel(p)}</td>
+          <td data-k="" class="row-actions">
+            <button class="kebab" aria-label="विकल्प / Options" title="विकल्प" onclick="event.stopPropagation();toggleRowMenu(event,'${p.regId}')">⋮</button>
+          </td>
         </tr>`;
     }).join('');
   }
@@ -1089,10 +1173,11 @@ function render() {
 }
 
 function updateSummary() {
-  document.getElementById('statTotal').textContent = patients.length;
-  document.getElementById('statGreen').textContent = patients.filter(p => p.riskLevel === 'GREEN').length;
-  document.getElementById('statYellow').textContent = patients.filter(p => p.riskLevel === 'YELLOW').length;
-  document.getElementById('statRed').textContent = patients.filter(p => p.riskLevel === 'RED').length;
+  const valid = patients.filter(p => p.status !== 'invalid');
+  document.getElementById('statTotal').textContent = valid.length;
+  document.getElementById('statGreen').textContent = valid.filter(p => p.riskLevel === 'GREEN').length;
+  document.getElementById('statYellow').textContent = valid.filter(p => p.riskLevel === 'YELLOW').length;
+  document.getElementById('statRed').textContent = valid.filter(p => p.riskLevel === 'RED').length;
 }
 
 /* ---- Inbox ---- */
@@ -1441,8 +1526,8 @@ function openVerify(regId) {
   setTimeout(() => document.getElementById('verifyInput').focus(), 100);
 }
 function setVerifyType(method) {
-  verifyType = method; // 'mobile' | 'abha'
-  document.querySelectorAll('#verifySeg button').forEach(b => b.classList.toggle('active', b.dataset.method === method));
+  // Single flow: create / login ABHA via the mother's mobile (OTP).
+  verifyType = 'mobile';
   const input = document.getElementById('verifyInput');
   const label = document.getElementById('verifyLabel');
   const hint = document.getElementById('verifyHint');
@@ -1450,29 +1535,17 @@ function setVerifyType(method) {
   const btn = document.getElementById('verifyBtn');
   document.getElementById('verifyErr').classList.remove('show');
 
-  if (method === 'mobile') {
-    // Verify via the mobile linked to ABHA (OTP).
-    label.innerHTML = 'मोबाइल नंबर - 10 अंक <span class="gloss">Mobile linked to ABHA</span>';
-    input.placeholder = 'ABHA से जुड़ा मोबाइल नंबर';
-    input.value = verifyTarget ? verifyTarget.mobile : ''; // pre-fill registered mobile
-    input.inputMode = 'numeric';
-    hint.textContent = 'इस मोबाइल पर OTP भेजा जाएगा।';
-    privacy.style.display = 'none';
-    btn.textContent = 'OTP भेजें / आगे बढ़ें';
-  } else {
-    // Login with ABHA: accept an ABHA address (name@abdm) OR a 14-digit ABHA number.
-    label.innerHTML = 'ABHA पता या ABHA नंबर <span class="gloss">ABHA address or number</span>';
-    input.placeholder = 'जैसे sarita@abdm या 14-अंकीय ABHA नंबर';
-    input.value = '';
-    input.inputMode = 'text';
-    hint.textContent = 'ABHA पता (name@abdm) या 14-अंकीय ABHA नंबर दर्ज करें।';
-    privacy.style.display = 'flex';
-    btn.textContent = '🔐 ABHA से सत्यापित करें';
-  }
+  label.innerHTML = 'मोबाइल नंबर - 10 अंक <span class="gloss">Create / login ABHA with Mobile</span>';
+  input.placeholder = 'ABHA से जुड़ा मोबाइल नंबर';
+  input.value = verifyTarget ? verifyTarget.mobile : ''; // pre-fill registered mobile
+  input.inputMode = 'numeric';
+  hint.textContent = 'इस मोबाइल पर OTP भेजा जाएगा।';
+  privacy.style.display = 'none';
+  btn.textContent = 'OTP भेजें / आगे बढ़ें';
 }
 function onVerifyInput() {
   const el = document.getElementById('verifyInput');
-  if (verifyType === 'mobile') el.value = el.value.replace(/\D/g, ''); // digits only for mobile
+  el.value = el.value.replace(/\D/g, ''); // digits only for mobile
   document.getElementById('verifyErr').classList.remove('show');
 }
 function finishVerify(abhaAddress, last4) {
@@ -1488,57 +1561,21 @@ async function submitVerify() {
   const raw = document.getElementById('verifyInput').value.trim();
   const err = document.getElementById('verifyErr');
 
-  if (verifyType === 'mobile') {
-    const digits = raw.replace(/\D/g, '');
-    if (digits.length !== 10) {
-      err.textContent = `मोबाइल नंबर 10 अंक का होना चाहिए (अभी ${digits.length})`;
-      err.classList.add('show');
-      return;
-    }
-    try {
-      const res = await apiFetch(`/api/patients/${verifyTarget.regId}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'mobile', value: digits }),
-      });
-      const data = await res.json();
-      finishVerify(data.abha_address || '', '');
-    } catch { finishVerify(mockAbhaAddress(verifyTarget), ''); }
-    return;
-  }
-
-  if (raw.includes('@')) {
-    if (!/^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/.test(raw)) {
-      err.textContent = 'ABHA पता सही नहीं है (जैसे sarita@abdm)';
-      err.classList.add('show');
-      return;
-    }
-    try {
-      await apiFetch(`/api/patients/${verifyTarget.regId}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'abha_address', value: raw.toLowerCase() }),
-      });
-    } catch { /* offline */ }
-    finishVerify(raw.toLowerCase(), '');
-    return;
-  }
-
   const digits = raw.replace(/\D/g, '');
-  if (digits.length !== 14) {
-    err.textContent = `ABHA नंबर 14 अंक का होना चाहिए (अभी ${digits.length})`;
+  if (digits.length !== 10) {
+    err.textContent = `मोबाइल नंबर 10 अंक का होना चाहिए (अभी ${digits.length})`;
     err.classList.add('show');
     return;
   }
-  const last4 = digits.slice(-4);
   try {
-    await apiFetch(`/api/patients/${verifyTarget.regId}/verify`, {
+    const res = await apiFetch(`/api/patients/${verifyTarget.regId}/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'abha_number', value: digits }),
+      body: JSON.stringify({ type: 'mobile', value: digits }),
     });
-  } catch { /* offline */ }
-  finishVerify('', last4);
+    const data = await res.json();
+    finishVerify(data.abha_address || '', '');
+  } catch { finishVerify(mockAbhaAddress(verifyTarget), ''); }
 }
 /* Mock: derive an ABHA (PHR) address from the mother's name */
 function mockAbhaAddress(p) {
@@ -1547,6 +1584,96 @@ function mockAbhaAddress(p) {
   for (const ch of p.name) s += (map[ch] || (/[a-zA-Z]/.test(ch) ? ch : ''));
   s = s.toLowerCase().slice(0, 10) || 'mother';
   return `${s}${p.mobile.slice(-2)}@abdm`;
+}
+
+/* =========================================================================
+   ROW KEBAB MENU + MARK INVALID
+   ========================================================================= */
+function toggleRowMenu(event, regId) {
+  const menu = document.getElementById('rowMenu');
+  // Toggle off if same row's menu is already open
+  if (menu.classList.contains('open') && rowMenuRegId === regId) { closeRowMenu(); return; }
+  rowMenuRegId = regId;
+  const p = findPatient(regId);
+  const isInvalid = p && p.status === 'invalid';
+  document.getElementById('rowMenuInvalid').style.display = isInvalid ? 'none' : 'flex';
+  document.getElementById('rowMenuRestore').style.display = isInvalid ? 'flex' : 'none';
+
+  // Position the menu under the clicked kebab, kept inside the viewport
+  const r = event.currentTarget.getBoundingClientRect();
+  menu.classList.add('open');
+  const mw = menu.offsetWidth, mh = menu.offsetHeight;
+  let left = r.right - mw;
+  if (left < 8) left = 8;
+  let top = r.bottom + 6;
+  if (top + mh > window.innerHeight - 8) top = r.top - mh - 6;
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+}
+function closeRowMenu() {
+  document.getElementById('rowMenu').classList.remove('open');
+  rowMenuRegId = null;
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('rowMenu');
+  if (menu.classList.contains('open') && !menu.contains(e.target) && !e.target.closest('.kebab')) closeRowMenu();
+});
+window.addEventListener('resize', closeRowMenu);
+window.addEventListener('scroll', closeRowMenu, true);
+
+function openInvalidFromMenu() {
+  const regId = rowMenuRegId;
+  closeRowMenu();
+  openInvalidModal(regId);
+}
+function restoreFromMenu() {
+  const p = findPatient(rowMenuRegId);
+  closeRowMenu();
+  if (!p) return;
+  delete p.status; delete p.invalidReason; delete p.invalidNote;
+  // TODO: API - POST /patients/:regId/status { status: 'active' }
+  console.log('[MOCK STATUS] restore', p.regId);
+  toast(`प्रविष्टि फिर मान्य की गई / Restored`);
+  render();
+}
+
+function openInvalidModal(regId) {
+  invalidTarget = findPatient(regId);
+  if (!invalidTarget) return;
+  document.getElementById('invalidFor').textContent = invalidTarget.name;
+  document.querySelectorAll('input[name="invalidReason"]').forEach(r => r.checked = false);
+  document.querySelectorAll('.reason-opt').forEach(o => o.classList.remove('sel'));
+  const other = document.getElementById('invalidOther');
+  other.value = ''; other.classList.remove('show');
+  document.getElementById('invalidErr').classList.remove('show');
+  openModal('invalidScrim');
+}
+function onReasonChange() {
+  const val = (document.querySelector('input[name="invalidReason"]:checked') || {}).value;
+  document.querySelectorAll('.reason-opt').forEach(o => {
+    o.classList.toggle('sel', o.querySelector('input').checked);
+  });
+  const other = document.getElementById('invalidOther');
+  other.classList.toggle('show', val === 'other');
+  if (val === 'other') setTimeout(() => other.focus(), 50);
+  document.getElementById('invalidErr').classList.remove('show');
+}
+function submitInvalid() {
+  const sel = document.querySelector('input[name="invalidReason"]:checked');
+  const err = document.getElementById('invalidErr');
+  if (!sel) { err.textContent = 'कृपया एक कारण चुनें'; err.classList.add('show'); return; }
+  const note = document.getElementById('invalidOther').value.trim();
+  if (sel.value === 'other' && !note) { err.textContent = 'कृपया कारण लिखें'; err.classList.add('show'); return; }
+
+  invalidTarget.status = 'invalid';
+  invalidTarget.invalidReason = sel.value;
+  invalidTarget.invalidNote = note;
+  // TODO: API - POST /patients/:regId/status { status: 'invalid', reason, note }
+  console.log('[MOCK STATUS] invalid', invalidTarget.regId, sel.value, note);
+  closeModal('invalidScrim');
+  toast(`प्रविष्टि अमान्य की गई / Marked invalid`);
+  render();
+  if (currentPatient && currentPatient.regId === invalidTarget.regId) closeModal('detailScrim');
 }
 
 /* =========================================================================
@@ -1612,7 +1739,8 @@ function closeModal(id) {
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    ['detailScrim','verifyScrim','reminderScrim'].forEach(closeModal);
+    ['detailScrim','verifyScrim','reminderScrim','invalidScrim'].forEach(closeModal);
+    closeRowMenu();
   }
 });
 function toast(msg) {
