@@ -544,6 +544,7 @@
       <div class="filters-foot">
         <button class="btn btn-primary" onclick="applyAndView()">🔎 छाँटें और देखें <span class="gloss">Filter &amp; view</span></button>
         <button class="btn btn-outline" onclick="openReminder()">📣 रिमाइंडर भेजें <span class="gloss">Send reminder</span></button>
+        <button class="btn btn-outline" onclick="downloadFilteredCsv()" title="वर्तमान फ़िल्टर के अनुसार CSV डाउनलोड करें">⬇ CSV डाउनलोड <span class="gloss">Download</span></button>
         <button class="btn-link" onclick="resetFilters()">↺ फ़िल्टर हटाएँ / Clear</button>
       </div>
     </div>
@@ -1107,7 +1108,7 @@ function idLine(p) {
 
 /* Short reason shown under the risk badge in the list */
 function topFactorLabel(p) {
-  if (p.riskOverride) return `<div class="psub">✎ ASHA द्वारा बदला गया</div>`;
+  if (p.riskOverride) return `<div class="psub">${p.riskOverride.by === 'Maatri' ? '🤖 Maatri द्वारा पहचाना गया' : '✎ ASHA द्वारा बदला गया'}</div>`;
   const codes = p.riskFactors || [];
   if (codes.length === 0) return '';
   // pick the highest-severity factor to display
@@ -1268,6 +1269,30 @@ function applyAndView() {
   document.getElementById('listPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   toast(`${n} माताएँ दिखाई जा रही हैं`);
 }
+function downloadFilteredCsv() {
+  const cohort = getCohort();
+  if (cohort.length === 0) { toast('कोई माताएँ नहीं — पहले फ़िल्टर बदलें'); return; }
+  const RISK_LABELS = { GREEN: 'कम जोखिम', YELLOW: 'मध्यम जोखिम', RED: 'उच्च जोखिम' };
+  const headers = ['Reg ID','नाम / Name','मोबाइल / Mobile','गाँव / Village','ब्लॉक / Block','जिला / District','LMP दिनांक','EDD','माह / Month','जोखिम / Risk','जोखिम कारण / Risk Factors','अगला ANC','ASHA नाम','पंजीकरणकर्ता'];
+  const rows = cohort.map(p => [
+    p.regId, p.name, p.mobile, p.village, p.block, p.district,
+    p.lmpDate || '', p.edd || '',
+    p.pregnancyMonth === 'delivered' ? 'Delivered' : (p.pregnancyMonth || ''),
+    RISK_LABELS[p.riskLevel] || p.riskLevel,
+    (p.riskFactors || []).map(c => { const f = RISK_CATALOG[c]; return f ? f.hi : c; }).join('; '),
+    p.nextAncDate || '', p.ashaName || '', p.registeredBy || '',
+  ]);
+  const escape = v => `"${String(v).replace(/"/g, '""')}"`;
+  const csv = [headers, ...rows].map(r => r.map(escape).join(',')).join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const today = new Date().toISOString().slice(0,10);
+  a.download = `maatri_patients_${today}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`${cohort.length} माताओं का CSV डाउनलोड हुआ`);
+}
 function populatePlaces() {
   const set = new Set();
   patients.forEach(p => { set.add(p.village); set.add(p.block); });
@@ -1353,7 +1378,7 @@ function applyDerivedRisk(p) {
   delete p.riskOverride;
   p.riskLevel = computeRiskLevel(p);
 }
-function addRiskFactor(regId) {
+async function addRiskFactor(regId) {
   const p = findPatient(regId);
   const sel = document.getElementById('addFactorSelect');
   if (!p || !sel || !sel.value) return;
@@ -1361,19 +1386,27 @@ function addRiskFactor(regId) {
   p.riskFactors = p.riskFactors || [];
   if (!p.riskFactors.includes(code)) p.riskFactors.push(code);
   applyDerivedRisk(p);
-  // TODO: API - POST /patients/:regId/risk-factors { add: code }
-  console.log('[MOCK RISK FACTOR +]', regId, code, '-> level', p.riskLevel);
+  try {
+    await apiFetch(`/api/patients/${regId}/risk-factors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ add: code }),
+    });
+  } catch { /* offline — updated locally */ }
   toast(`जोखिम स्थिति जोड़ी गई`);
   openDetail(regId);
   render();
 }
-function removeRiskFactor(regId, code) {
+async function removeRiskFactor(regId, code) {
   const p = findPatient(regId);
   if (!p) return;
   p.riskFactors = (p.riskFactors || []).filter(c => c !== code);
   applyDerivedRisk(p);
-  // TODO: API - DELETE /patients/:regId/risk-factors/:code
-  console.log('[MOCK RISK FACTOR -]', regId, code, '-> level', p.riskLevel);
+  try {
+    await apiFetch(`/api/patients/${regId}/risk-factors/${encodeURIComponent(code)}`, {
+      method: 'DELETE',
+    });
+  } catch { /* offline — updated locally */ }
   toast(`जोखिम स्थिति हटाई गई`);
   openDetail(regId);
   render();
@@ -1457,7 +1490,7 @@ function openDetail(regId) {
       ${p.riskNote ? `<div class="risk-note">📝 ${escapeHtml(p.riskNote)}</div>` : ''}
       ${reportedByMotherHtml(p)}
       <div class="risk-proto risk-${p.riskLevel}">⏱ ${RISK_PROTOCOL[p.riskLevel].hi}</div>
-      ${p.riskOverride ? `<div class="risk-overridden">✎ ${escapeHtml(p.riskOverride.by)} द्वारा बदला गया${p.riskOverride.reason ? ' - ' + escapeHtml(p.riskOverride.reason) : ''}</div>` : ''}
+      ${p.riskOverride ? `<div class="risk-overridden">${p.riskOverride.by === 'Maatri' ? '🤖 Maatri द्वारा पहचाना गया' : '✎ ASHA द्वारा बदला गया'}</div>` : ''}
       <div class="risk-change">
         <div class="risk-change-label">जोखिम स्तर बदलें <span class="gloss">Change risk (ASHA/ANM)</span></div>
         <div class="risk-seg">
@@ -1766,9 +1799,14 @@ function showOffline() { document.getElementById('offlineBanner').style.display 
 function hideOffline() { document.getElementById('offlineBanner').style.display = 'none'; }
 
 function mapApiPatient(p) {
+  const cleanFactors = (p.risk_factors || []).filter(f => f !== '__asha_override__');
+  const storedLevel = p.risk_level || 'GREEN';
+  // If stored level differs from what factors compute to, ASHA manually overrode it
+  const computedLevel = computeRiskLevel({ riskFactors: cleanFactors });
+  const isOverride = storedLevel !== computedLevel;
   return {
     registeredBy: p.registered_by || 'self',
-    riskFactors: p.risk_factors || [],
+    riskFactors: cleanFactors,
     riskNote: '',
     regId: p.reg_id,
     name: p.name,
@@ -1779,8 +1817,8 @@ function mapApiPatient(p) {
     lmpDate: p.lmp_date,
     edd: p.edd,
     pregnancyMonth: p.pregnancy_month,
-    riskLevel: p.risk_level || 'GREEN',
-    riskOverride: !!p.risk_override,
+    riskLevel: storedLevel,
+    riskOverride: isOverride ? { level: storedLevel, by: cleanFactors.length ? 'Maatri' : 'ASHA', reason: '' } : null,
     verified: p.verified || 'none',
     abhaAddress: p.abha_address || '',
     idLast4: '',
@@ -1804,11 +1842,8 @@ async function init() {
     const res = await apiFetch('/api/patients');
     const data = await res.json();
     patients = Array.isArray(data) ? data.map(mapApiPatient) : [];
-    patients.forEach(p => { if (!p.riskOverride) p.riskLevel = computeRiskLevel(p); });
   } catch {
     showOffline();
-    // keep mock patients already in array if fetch failed entirely
-    patients.forEach(p => { if (!p.riskOverride) p.riskLevel = computeRiskLevel(p); });
   }
 
   render();

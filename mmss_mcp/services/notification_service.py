@@ -1,7 +1,7 @@
 """
-Send WhatsApp alerts via Interakt template API.
-NOTIFY_MODE=whatsapp → real Interakt send (requires approved templates)
-NOTIFY_MODE=log      → log only, no actual send (default for demo without templates)
+Send WhatsApp alerts via Interakt.
+NOTIFY_MODE=whatsapp → real Interakt send
+NOTIFY_MODE=log      → log only, no actual send (default for demo)
 """
 import os
 import logging
@@ -101,6 +101,48 @@ async def send_visit_request(
         return True
 
 
+async def send_text(to_phone: str, message: str) -> bool:
+    """Send a free-form text message via Interakt (no template needed)."""
+    if NOTIFY_MODE != "whatsapp":
+        logger.info("[notification_service/log] send_text to=%s msg=%s", to_phone, message[:80])
+        return True
+
+    if not INTERAKT_API_KEY:
+        logger.warning("[notification_service] INTERAKT_API_KEY not set, skipping send")
+        return False
+
+    digits = "".join(c for c in to_phone if c.isdigit())
+    country_code, phone_number = (f"+{digits[:2]}", digits[2:]) if len(digits) > 10 else ("+91", digits[-10:])
+
+    payload = {
+        "countryCode": country_code,
+        "phoneNumber": phone_number,
+        "callbackData": "maatri_reminder",
+        "type": "Text",
+        "data": {"message": message},
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(
+                INTERAKT_API_URL,
+                json=payload,
+                headers={
+                    "Authorization": f"Basic {INTERAKT_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+            )
+            if resp.is_success:
+                logger.info("[notification_service] send_text delivered to %s", to_phone)
+                return True
+            else:
+                logger.error("[notification_service] Interakt error %s: %s", resp.status_code, resp.text)
+                return False
+    except Exception as e:
+        logger.error("[notification_service] send_text failed for %s: %s", to_phone, e)
+        return False
+
+
 async def _send_template(to_phone: str, template_name: str, body_values: list[str]) -> bool:
     """Send an Interakt template message."""
     if not INTERAKT_API_KEY:
@@ -134,7 +176,7 @@ async def _send_template(to_phone: str, template_name: str, body_values: list[st
                     "Content-Type": "application/json",
                 },
             )
-            if resp.status_code == 200:
+            if resp.is_success:
                 logger.info(f"[notification_service] Sent {template_name} to {to_phone}")
                 return True
             else:

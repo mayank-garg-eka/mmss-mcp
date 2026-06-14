@@ -10,7 +10,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from mmss_mcp.db.database import db
-from mmss_mcp.services.notification_service import send_visit_request
+from mmss_mcp.services.notification_service import send_text
 
 logger = logging.getLogger(__name__)
 
@@ -217,10 +217,10 @@ def register_dashboard_routes(mcp: FastMCP) -> None:
                 p = conn.execute("SELECT id FROM patients WHERE reg_id=?", (reg_id,)).fetchone()
                 if not p:
                     return JSONResponse({"error": "Not found"}, status_code=404)
+                override_reason = reason or "asha_override"
                 conn.execute(
                     "UPDATE patients SET risk_level=? WHERE reg_id=?", (level, reg_id)
                 )
-                # Log override as a new HRP case if escalating
                 if level in ("RED", "YELLOW"):
                     existing = conn.execute(
                         "SELECT id FROM hrp_cases WHERE patient_id=? AND status='open'", (p["id"],)
@@ -228,7 +228,7 @@ def register_dashboard_routes(mcp: FastMCP) -> None:
                     if not existing:
                         conn.execute(
                             "INSERT INTO hrp_cases (patient_id, priority, reasons) VALUES (?,?,?)",
-                            (p["id"], level, json.dumps([reason] if reason else ["asha_override"])),
+                            (p["id"], level, json.dumps([override_reason])),
                         )
             return JSONResponse({"success": True, "reg_id": reg_id, "risk_level": level})
         except Exception as e:
@@ -253,6 +253,46 @@ def register_dashboard_routes(mcp: FastMCP) -> None:
             return JSONResponse({"success": True, "abha_address": abha_address})
         except Exception as e:
             logger.error("[api_verify_patient] %s", e)
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @mcp.custom_route("/api/patients/{reg_id}/risk-factors", methods=["POST"])
+    async def api_add_risk_factor(request: Request) -> JSONResponse:
+        reg_id = request.path_params.get("reg_id", "")
+        try:
+            body = await request.json()
+            code = body.get("add", "").strip()
+            if not code:
+                return JSONResponse({"error": "add field required"}, status_code=400)
+            with db() as conn:
+                p = conn.execute("SELECT id, risk_reasons, risk_level FROM patients WHERE reg_id=?", (reg_id,)).fetchone()
+                if not p:
+                    return JSONResponse({"error": "Not found"}, status_code=404)
+                factors = json.loads(p["risk_reasons"] or "[]")
+                # Strip override sentinel so we re-derive cleanly
+                factors = [f for f in factors if f != "__asha_override__"]
+                if code not in factors:
+                    factors.append(code)
+                conn.execute("UPDATE patients SET risk_reasons=? WHERE reg_id=?", (json.dumps(factors), reg_id))
+            return JSONResponse({"success": True, "reg_id": reg_id, "risk_factors": factors})
+        except Exception as e:
+            logger.error("[api_add_risk_factor] %s", e)
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    @mcp.custom_route("/api/patients/{reg_id}/risk-factors/{code}", methods=["DELETE"])
+    async def api_remove_risk_factor(request: Request) -> JSONResponse:
+        reg_id = request.path_params.get("reg_id", "")
+        code = request.path_params.get("code", "")
+        try:
+            with db() as conn:
+                p = conn.execute("SELECT id, risk_reasons FROM patients WHERE reg_id=?", (reg_id,)).fetchone()
+                if not p:
+                    return JSONResponse({"error": "Not found"}, status_code=404)
+                factors = json.loads(p["risk_reasons"] or "[]")
+                factors = [f for f in factors if f not in (code, "__asha_override__")]
+                conn.execute("UPDATE patients SET risk_reasons=? WHERE reg_id=?", (json.dumps(factors), reg_id))
+            return JSONResponse({"success": True, "reg_id": reg_id, "risk_factors": factors})
+        except Exception as e:
+            logger.error("[api_remove_risk_factor] %s", e)
             return JSONResponse({"error": str(e)}, status_code=500)
 
     @mcp.custom_route("/api/escalations", methods=["GET"])
@@ -324,13 +364,7 @@ def register_dashboard_routes(mcp: FastMCP) -> None:
                 if not phone:
                     continue
                 try:
-                    await send_visit_request(
-                        to_phone=phone,
-                        asha_name="Maatri",
-                        patient_name=name,
-                        village="",
-                        reason=text,
-                    )
+                    await send_text(to_phone=phone, message=text)
                     sent += 1
                 except Exception as sms_err:
                     logger.warning("[api_reminders] failed for %s: %s", phone, sms_err)
